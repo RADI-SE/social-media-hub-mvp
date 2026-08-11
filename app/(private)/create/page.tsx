@@ -1,9 +1,5 @@
-import React from 'react'
+import PostForm from "@/components/posts/PostForm";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function CreatePage() {
+  return <PostForm />;
 }
-
-export default page

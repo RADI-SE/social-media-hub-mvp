@@ -1,9 +1,5 @@
-import React from 'react'
+import CommentList from "@/components/comments/CommentList";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function CommentsPage() {
+  return <CommentList />;
 }
-
-export default page

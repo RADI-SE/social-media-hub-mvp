@@ -1,410 +1,155 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useUser } from '@clerk/nextjs';
+import { useRef, useState } from "react";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { KeyRound, Loader2, ShieldCheck, X } from "lucide-react";
+import PageHeader from "@/components/hub/PageHeader";
 import { ProfilePhoto } from "../ui/profile/ProfilePhoto";
 import { ProfileField } from "../ui/profile/ProfileField";
 import { DangerZone } from "../ui/profile/DangerZone";
 import { PasswordConfirmDialog } from "../ui/profile/PasswordConfirmDialog";
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const NAME_PATTERN = /^[\p{L}\p{M}][\p{L}\p{M}\s.'-]*$/u;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+function messageFrom(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+async function responseData(response: Response): Promise<{ error?: string; code?: string }> {
+  try { return await response.json(); } catch { return {}; }
+}
+
 export function ProfileSettings() {
-    const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState<string | null>(null);
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [nameSuccess, setNameSuccess] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState("");
+  const [savingField, setSavingField] = useState<"name" | "email" | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailDialogError, setEmailDialogError] = useState("");
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const [imageSuccess, setImageSuccess] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [showAuthDialog, setShowAuthDialog] = useState(false);
-    const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
-    const [emailDialogError, setEmailDialogError] = useState("");
+  if (!isLoaded) return <ProfileSkeleton />;
+  if (!user) return <div className="rounded-2xl bg-rose-50 p-5 text-sm text-rose-700">Please sign in to manage your profile.</div>;
 
-    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-    const [passwordChangeError, setPasswordChangeError] = useState("");
-    const [passwordChangeSuccess, setPasswordChangeSuccess] = useState("");
- 
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const [imageError, setImageError] = useState("");
-    const fileInputRef = useRef<HTMLInputElement>(null);
- 
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [deletePassword, setDeletePassword] = useState("");
-    const [deleteError, setDeleteError] = useState("");
-    const [isDeleting, setIsDeleting] = useState(false);
+  const nameValue = user.fullName ?? user.firstName ?? "";
+  const emailValue = user.primaryEmailAddress?.emailAddress ?? "";
+  const shownName = nameDraft ?? nameValue;
+  const shownEmail = emailDraft ?? emailValue;
 
-    const handleEmailChange = async (data: { password?: string }) => {
-        const password = data.password!;
-        setIsSubmittingPassword(true);
-        setEmailDialogError("");
+  async function saveName() {
+    const normalized = shownName.trim().replace(/\s+/g, " ");
+    setNameError(""); setNameSuccess("");
+    if (normalized.length < 2) { setNameError("Enter at least 2 characters."); return; }
+    if (normalized.length > 60) { setNameError("Name must be 60 characters or fewer."); return; }
+    if (!NAME_PATTERN.test(normalized)) { setNameError("Use letters, spaces, apostrophes, periods, or hyphens only."); return; }
+    if (normalized === nameValue) { setNameError("Make a change before saving."); return; }
+    const [firstName, ...lastParts] = normalized.split(" ");
+    setSavingField("name");
+    try {
+      await user!.update({ firstName, lastName: lastParts.join(" ") || null });
+      await user!.reload();
+      setNameDraft(null); setNameSuccess("Name updated successfully.");
+    } catch (error) { setNameError(messageFrom(error, "Could not update your name.")); }
+    finally { setSavingField(null); }
+  }
 
-        try {
-            const res = await fetch("/api/user/update-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    newEmail: email || emailValue,
-                    currentPassword: password,
-                }),
-            });
+  function requestEmailChange() {
+    const normalized = shownEmail.trim().toLowerCase();
+    setEmailError(""); setEmailSuccess("");
+    if (!EMAIL_PATTERN.test(normalized)) { setEmailError("Enter a valid email address, such as name@example.com."); return; }
+    if (normalized === emailValue.toLowerCase()) { setEmailError("Enter a different email address."); return; }
+    setEmailDraft(normalized); setShowEmailDialog(true);
+  }
 
-            const dataRes = await res.json();
+  async function confirmEmailChange(data: { password?: string }) {
+    setSavingField("email"); setEmailDialogError("");
+    try {
+      const response = await fetch("/api/user/update-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newEmail: shownEmail.trim().toLowerCase(), currentPassword: data.password }) });
+      const result = await responseData(response);
+      if (!response.ok) { setEmailDialogError(result.code === "EMAIL_EXISTS" ? "This email address is already in use." : result.error || "Could not update the email address."); return; }
+      await user!.reload(); setShowEmailDialog(false); setEmailDraft(null); setEmailSuccess("Email updated successfully.");
+    } catch (error) { setEmailDialogError(messageFrom(error, "Network error. Please try again.")); }
+    finally { setSavingField(null); }
+  }
 
-            if (!res.ok) {
-                if (dataRes.code === "EMAIL_PENDING") {
-                    await user.reload();
-                    setIsSubmittingPassword(false);
-                    return;
-                }
+  async function updatePassword(data: { currentPassword?: string; newPassword?: string }) {
+    setIsUpdatingPassword(true); setPasswordError(""); setPasswordSuccess("");
+    try {
+      const response = await fetch("/api/user/update-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      const result = await responseData(response);
+      if (!response.ok) { setPasswordError(result.code === "form_password_incorrect" ? "Current password is incorrect." : result.code === "additional_verification_required" ? "Additional verification is required. Sign in again, then retry." : result.error || "Could not update the password."); return; }
+      setPasswordSuccess("Password updated successfully.");
+      window.setTimeout(() => { setShowPasswordDialog(false); setPasswordSuccess(""); }, 1200);
+    } catch (error) { setPasswordError(messageFrom(error, "Network error. Please try again.")); }
+    finally { setIsUpdatingPassword(false); }
+  }
 
-                if (dataRes.code === "EMAIL_EXISTS") {
-                    setEmailDialogError("This email is already in use.");
-                    setIsSubmittingPassword(false);
-                    return;
-                }
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImageError(""); setImageSuccess("");
+    if (!IMAGE_TYPES.includes(file.type)) { setImageError("Choose a JPEG, PNG, GIF, or WebP image."); event.target.value = ""; return; }
+    if (file.size > MAX_IMAGE_SIZE) { setImageError("Image must be 5 MB or smaller."); event.target.value = ""; return; }
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData(); formData.append("file", file);
+      const response = await fetch("/api/user/update-profile-image", { method: "POST", body: formData });
+      const result = await responseData(response);
+      if (!response.ok) throw new Error(result.error || "Could not upload the image.");
+      await user!.reload(); setImageSuccess("Profile photo updated.");
+    } catch (error) { setImageError(messageFrom(error, "Could not upload the image.")); }
+    finally { setIsUploadingImage(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  }
 
-                setEmailDialogError(dataRes.error || "Failed to update email");
-                setIsSubmittingPassword(false);
-                return;
-            }
+  async function removeImage() {
+    if (!user!.hasImage) return;
+    setIsUploadingImage(true); setImageError(""); setImageSuccess("");
+    try {
+      const response = await fetch("/api/user/update-profile-image", { method: "DELETE" });
+      const result = await responseData(response);
+      if (!response.ok) throw new Error(result.error || "Could not remove the image.");
+      await user!.reload(); setImageSuccess("Profile photo removed.");
+    } catch (error) { setImageError(messageFrom(error, "Could not remove the image.")); }
+    finally { setIsUploadingImage(false); }
+  }
 
-            await user.reload();
-            setShowAuthDialog(false);
-            setEmail("");
-            setEmailDialogError("");
-        } catch (error: any) {
-            // silent
-        } finally {
-            setIsSubmittingPassword(false);
-        }
-    };
+  async function deleteAccount() {
+    setDeleteError("");
+    if (!deletePassword.trim()) { setDeleteError("Enter your current password to confirm deletion."); return; }
+    setIsDeleting(true);
+    try {
+      const response = await fetch("/api/user/delete-account", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: deletePassword }) });
+      const result = await responseData(response);
+      if (!response.ok) { setDeleteError(result.code === "form_password_incorrect" ? "Current password is incorrect." : result.error || "Could not delete the account."); return; }
+      await signOut({ redirectUrl: "/" });
+    } catch (error) { setDeleteError(messageFrom(error, "Network error. Please try again.")); }
+    finally { setIsDeleting(false); }
+  }
 
-    const handlePasswordUpdate = async (data: { currentPassword?: string; newPassword?: string }) => {
-        setIsUpdatingPassword(true);
-        setPasswordChangeError("");
-        setPasswordChangeSuccess("");
+  return <><PageHeader eyebrow="Account" title="Profile settings" description="Manage the identity and security details connected to your Spiders AI workspace." /><div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]"><aside className="glass-card h-fit rounded-3xl p-6 sm:p-8"><ProfilePhoto avatarUrl={user.imageUrl} disabled={isUploadingImage} onClick={() => fileInputRef.current?.click()} /><input ref={fileInputRef} type="file" accept={IMAGE_TYPES.join(",")} onChange={handleFileChange} className="hidden" disabled={isUploadingImage} />{isUploadingImage && <p className="mt-4 flex items-center gap-2 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" />Updating photo…</p>}{imageError && <p role="alert" className="mt-4 text-xs text-rose-600">{imageError}</p>}{imageSuccess && <p role="status" className="mt-4 text-xs text-emerald-700">{imageSuccess}</p>}{user.hasImage && !isUploadingImage && <button type="button" onClick={removeImage} className="mt-4 text-xs font-semibold text-rose-600 hover:underline">Remove photo</button>}<div className="mt-8 rounded-2xl bg-blue-50/70 p-4"><div className="flex items-center gap-2 text-[#173b9a]"><ShieldCheck size={16} /><p className="text-xs font-bold uppercase tracking-[0.12em]">Secured by Clerk</p></div><p className="mt-2 text-xs leading-5 text-slate-500">Sensitive changes require your current password and are processed through protected API routes.</p></div></aside><section className="space-y-4"><ProfileField label="Full name" value={shownName} onChange={(event) => { setNameDraft(event.target.value); setNameError(""); setNameSuccess(""); }} onSave={saveName} disabled={!shownName.trim() || shownName === nameValue} isSaving={savingField === "name"} error={nameError} success={nameSuccess} helper="2–60 characters. Arabic and English names are supported." /><ProfileField label="Email" type="email" value={shownEmail} onChange={(event) => { setEmailDraft(event.target.value); setEmailError(""); setEmailSuccess(""); }} onSave={requestEmailChange} disabled={!shownEmail.trim() || shownEmail.toLowerCase() === emailValue.toLowerCase()} isSaving={savingField === "email"} error={emailError} success={emailSuccess} warning helper="Changing email requires your current password." /><div className="rounded-2xl border border-white/90 bg-white/65 p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><div className="flex items-center gap-2"><KeyRound size={17} className="text-[#3556d9]" /><h2 className="text-sm font-semibold text-[#071e55]">Password</h2></div><p className="mt-2 text-xs text-slate-500">Use at least 8 characters with uppercase, lowercase, and a number.</p></div><button type="button" onClick={() => setShowPasswordDialog(true)} className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-[#173b9a] hover:bg-blue-100">Change password</button></div></div><DangerZone onDelete={() => setShowDeleteDialog(true)} /></section></div><PasswordConfirmDialog isOpen={showEmailDialog} onClose={() => { setShowEmailDialog(false); setEmailDialogError(""); }} onSubmit={confirmEmailChange} isLoading={savingField === "email"} error={emailDialogError} title="Confirm email change" description={`Enter your current password to change your email to ${shownEmail}.`} submitLabel="Update email" mode="email" /><PasswordConfirmDialog isOpen={showPasswordDialog} onClose={() => { setShowPasswordDialog(false); setPasswordError(""); setPasswordSuccess(""); }} onSubmit={updatePassword} isLoading={isUpdatingPassword} error={passwordError} success={passwordSuccess} title="Change password" description="Confirm your current password and choose a secure new one." submitLabel="Update password" mode="password" />{showDeleteDialog && <DeleteDialog password={deletePassword} error={deleteError} isDeleting={isDeleting} onPasswordChange={(value) => { setDeletePassword(value); setDeleteError(""); }} onCancel={() => { setShowDeleteDialog(false); setDeletePassword(""); setDeleteError(""); }} onConfirm={deleteAccount} />}</>;
+}
 
-        try {
-            const res = await fetch("/api/user/update-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    currentPassword: data.currentPassword!,
-                    newPassword: data.newPassword!,
-                }),
-            });
+function ProfileSkeleton() { return <div className="space-y-5"><div className="h-24 animate-pulse rounded-3xl bg-white/55" /><div className="h-72 animate-pulse rounded-3xl bg-white/55" /></div>; }
 
-            const result = await res.json();
-
-            if (!res.ok) {
-                if (res.status === 400 && result.code === "form_password_incorrect") {
-                    setPasswordChangeError("Current password is incorrect.");
-                } else if (res.status === 403 && result.code === "additional_verification_required") {
-                    setPasswordChangeError(
-                        "Additional verification is required. If you have 2FA enabled, please use the sign‑in flow instead."
-                    );
-                } else {
-                    setPasswordChangeError(result.error || "Could not update password. Please try again.");
-                }
-                return;
-            }
-
-            setPasswordChangeSuccess("Password updated successfully!");
-            setTimeout(() => {
-                setShowPasswordDialog(false);
-                setPasswordChangeSuccess("");
-            }, 1500);
-
-        } catch (error: any) {
-            console.error("Password update failed:", error);
-            setPasswordChangeError("Network error. Please try again.");
-        } finally {
-            setIsUpdatingPassword(false);
-        }
-    };
-
-    const handleSave = async (field: string) => {
-        try {
-            if (field === "Name") {
-                await user.update({ firstName: name });
-                await user.reload();
-                console.log("Name updated.");
-            }
-
-            if (field === "Email") {
-                if (!email || email === user.primaryEmailAddress?.emailAddress) return;
-                setShowAuthDialog(true);
-            }
-        } catch (error) {
-            console.error(`Failed to save ${field}:`, error);
-        }
-    };
-
-    // ---- Profile image handlers ----
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-        if (!allowedTypes.includes(file.type)) {
-            setImageError("Unsupported file type. Please use JPEG, PNG, GIF, or WebP.");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            setImageError("File is too large. Max size is 5 MB.");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-        }
-
-        setIsUploadingImage(true);
-        setImageError("");
-
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-
-            const res = await fetch("/api/user/update-profile-image", {
-                method: "POST",
-                body: formData,
-            });
-
-            let data;
-            try {
-                const text = await res.text();
-                data = text ? JSON.parse(text) : {};
-            } catch {
-                data = {};
-            }
-
-            if (!res.ok) {
-                throw new Error(data.error || `Upload failed (${res.status})`);
-            }
-
-            await user.reload();
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        } catch (error: any) {
-            console.error("Failed to upload image:", error);
-            setImageError(error.message || "Could not upload image.");
-        } finally {
-            setIsUploadingImage(false);
-        }
-    };
-
-    const handleRemoveImage = async () => {
-        if (!user.hasImage) return;
-        setIsUploadingImage(true);
-        setImageError("");
-
-        try {
-            const res = await fetch("/api/user/update-profile-image", {
-                method: "DELETE",
-            });
-
-            let data;
-            try {
-                const text = await res.text();
-                data = text ? JSON.parse(text) : {};
-            } catch {
-                data = {};
-            }
-
-            if (!res.ok) {
-                throw new Error(data.error || `Remove failed (${res.status})`);
-            }
-
-            await user.reload();
-        } catch (error: any) {
-            console.error("Failed to remove image:", error);
-            setImageError(error.message || "Could not remove image.");
-        } finally {
-            setIsUploadingImage(false);
-        }
-    };
-
-    // ---- Delete account handler ----
-    const handleDeleteAccount = async () => {
-        setIsDeleting(true);
-        setDeleteError("");
-
-        try {
-            const res = await fetch("/api/user/delete-account", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password: deletePassword }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                if (res.status === 400 && data.code === "form_password_incorrect") {
-                    setDeleteError("Current password is incorrect.");
-                } else {
-                    setDeleteError(data.error || "Failed to delete account. Please try again.");
-                }
-                return;
-            }
-
-            // Account deleted successfully – sign out the user (Clerk will handle)
-            await user.signOut();
-            // Optionally redirect to home or login page
-            window.location.href = "/";
-        } catch (error: any) {
-            console.error("Delete account failed:", error);
-            setDeleteError("Network error. Please try again.");
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    if (!isLoaded) return <div>Loading...</div>;
-    if (!user) return <div>Please sign in.</div>;
-
-    const nameValue = user.fullName ?? "";
-    const emailValue = user.primaryEmailAddress?.emailAddress ?? "";
-    const avatarUrl = user.imageUrl;
-
-    return (
-        <div className="mx-auto max-w-4xl space-y-6 p-6">
-            <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-            </header> 
-            <div>
-                <ProfilePhoto 
-                    avatarUrl={avatarUrl} 
-                    onClick={() => fileInputRef.current?.click()} 
-                />
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="profile-upload"
-                    disabled={isUploadingImage}
-                />
-                {imageError && <p className="text-sm text-red-600 mt-1">{imageError}</p>}
-                <div className="flex items-center gap-3 mt-1">
-                    {isUploadingImage && (
-                        <span className="text-sm text-gray-500">Uploading...</span>
-                    )}
-                    {user.hasImage && !isUploadingImage && (
-                        <button
-                            onClick={handleRemoveImage}
-                            className="text-sm text-red-600 hover:underline"
-                        >
-                            Remove
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            <ProfileField
-                label="Name"
-                value={name || nameValue}
-                onChange={(e) => setName(e.target.value)}
-                onSave={() => handleSave("Name")}
-            />
-
-            <ProfileField
-                label="Email"
-                value={email || emailValue}
-                onChange={(e) => setEmail(e.target.value)}
-                onSave={() => handleSave("Email")}
-                warning={true}
-            />
-
-            <div className="flex justify-between items-center border-b border-gray-200 py-3">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Password</label>
-                    <p className="text-sm text-gray-500">Change your password</p>
-                </div>
-                <button
-                    onClick={() => setShowPasswordDialog(true)}
-                    className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-600 rounded-md hover:bg-blue-50"
-                >
-                    Change Password
-                </button>
-            </div>
-
-            <PasswordConfirmDialog
-                isOpen={showAuthDialog}
-                onClose={() => {
-                    setShowAuthDialog(false);
-                    setEmailDialogError("");
-                }}
-                onSubmit={handleEmailChange}
-                isLoading={isSubmittingPassword}
-                error={emailDialogError}
-                title="Authentication Required"
-                description="To change your email, please enter your current password."
-                mode="email"
-            />
-
-            <PasswordConfirmDialog
-                isOpen={showPasswordDialog}
-                onClose={() => {
-                    setShowPasswordDialog(false);
-                    setPasswordChangeError("");
-                    setPasswordChangeSuccess("");
-                }}
-                onSubmit={handlePasswordUpdate}
-                isLoading={isUpdatingPassword}
-                error={passwordChangeError}
-                success={passwordChangeSuccess}
-                title="Change Password"
-                description="Enter your current and new password."
-                submitLabel="Update Password"
-                mode="password"
-            />
-
-            <hr className="border-gray-200" />
-
-            <DangerZone onDelete={() => setShowDeleteDialog(true)} />
- 
-            {showDeleteDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-                        <h2 className="text-xl font-bold text-red-600 mb-2">Delete Account</h2>
-                        <p className="text-gray-600 mb-4">
-                            This action is <strong>permanent</strong> and cannot be undone. All your data will be erased.
-                            Please enter your current password to confirm.
-                        </p>
-                        <div className="mb-4">
-                            <label htmlFor="delete-password" className="block text-sm font-medium text-gray-700 mb-1">
-                                Current Password
-                            </label>
-                            <input
-                                id="delete-password"
-                                type="password"
-                                value={deletePassword}
-                                onChange={(e) => setDeletePassword(e.target.value)}
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                placeholder="Enter your password"
-                                disabled={isDeleting}
-                            />
-                            {deleteError && <p className="text-sm text-red-600 mt-1">{deleteError}</p>}
-                        </div>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => {
-                                    setShowDeleteDialog(false);
-                                    setDeletePassword("");
-                                    setDeleteError("");
-                                }}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
-                                disabled={isDeleting}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDeleteAccount}
-                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
-                                disabled={isDeleting || !deletePassword}
-                            >
-                                {isDeleting ? "Deleting..." : "Delete Account"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+function DeleteDialog({ password, error, isDeleting, onPasswordChange, onCancel, onConfirm }: { password: string; error: string; isDeleting: boolean; onPasswordChange: (value: string) => void; onCancel: () => void; onConfirm: () => void }) {
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#061b4f]/55 p-4 backdrop-blur-sm"><div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-account-title"><div className="flex items-start justify-between"><div><h2 id="delete-account-title" className="text-xl font-semibold text-rose-700">Delete account permanently?</h2><p className="mt-2 text-sm leading-6 text-slate-500">All account access will be removed. This action cannot be undone.</p></div><button type="button" onClick={onCancel} disabled={isDeleting} aria-label="Close dialog" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"><X size={17} /></button></div><label htmlFor="delete-password" className="mt-5 block text-sm font-semibold text-slate-700">Current password</label><input id="delete-password" type="password" autoComplete="current-password" autoFocus value={password} onChange={(event) => onPasswordChange(event.target.value)} disabled={isDeleting} aria-invalid={Boolean(error)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none ${error ? "border-rose-300 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:ring-2 focus:ring-blue-100"}`} />{error && <p role="alert" className="mt-2 text-sm text-rose-600">{error}</p>}<div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onCancel} disabled={isDeleting} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button><button type="button" onClick={onConfirm} disabled={isDeleting || !password.trim()} className="inline-flex min-w-32 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50">{isDeleting && <Loader2 size={15} className="animate-spin" />}{isDeleting ? "Deleting…" : "Delete account"}</button></div></div></div>;
 }

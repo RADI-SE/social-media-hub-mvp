@@ -1,9 +1,5 @@
-import React from 'react'
+import PostList from "@/components/posts/PostList";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function PostsPage() {
+  return <PostList />;
 }
-
-export default page

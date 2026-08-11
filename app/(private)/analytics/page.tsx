@@ -1,9 +1,5 @@
-import React from 'react'
+import AnalyticsOverview from "./AnalyticsOverview";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function AnalyticsPage() {
+  return <AnalyticsOverview />;
 }
-
-export default page

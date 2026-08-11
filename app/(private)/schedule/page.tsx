@@ -1,9 +1,5 @@
-import React from 'react'
+import ContentCalendar from "@/components/posts/ContentCalendar";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function SchedulePage() {
+  return <ContentCalendar />;
 }
-
-export default page
