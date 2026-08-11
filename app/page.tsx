@@ -1,20 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import LandingExperience from "@/components/landing/LandingExperience";
 
-export default async function HomePage() {
+export default async function LandingPage() {
   const { userId } = await auth();
-
-  if (userId) {
-    redirect("/home");
-  }
-
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div>
-        <h1>Social Media Marketing Hub</h1>
-
-        <a href="/sign-in">Sign In</a>
-      </div>
-    </main>
-  );
+  return <LandingExperience signedIn={Boolean(userId)} />;
 }
+

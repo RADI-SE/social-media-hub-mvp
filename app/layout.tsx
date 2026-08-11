@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Social Media Marketing Hub",
-  description: "Social media management and marketing platform",
+  title: "Spiders AI | Social Media Marketing Hub",
+  description: "Plan, monitor, analyze, and follow up from one focused workspace.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <ConvexClientProvider>
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
           <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           >

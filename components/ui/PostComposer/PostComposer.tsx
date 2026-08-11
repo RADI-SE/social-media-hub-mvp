@@ -89,7 +89,6 @@ export function PostComposer({ isOpen, onClose }: PostComposerProps) {
           {aiOpen && !previewOpen && (
             <AIAssistantPanel
               isOpen={aiOpen}
-              content={content}
               onApplyContent={setContent}
               channelIcon={getChannelIcon(selectedChannels[0] || '')}
               onClose={() => setAiOpen(false)} // 👈 pass onClose so "Go back" works

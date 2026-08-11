@@ -1,9 +1,2 @@
-import React from 'react'
+export { default } from "@/components/hub/StatusPill";
 
-function StatusBadge() {
-  return (
-    <div>StatusBadge</div>
-  )
-}
-
-export default StatusBadge

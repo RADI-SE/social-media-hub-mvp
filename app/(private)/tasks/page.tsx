@@ -1,9 +1,5 @@
-import React from 'react'
+import TaskList from "@/components/tasks/TaskList";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function TasksPage() {
+  return <TaskList />;
 }
-
-export default page
