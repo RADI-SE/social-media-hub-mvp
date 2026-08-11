@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@clerk/backend": "^3.16.3",
     "@clerk/nextjs": "^7.7.1",
     "convex": "^1.43.0",
     "lucide-react": "^1.31.0",
@@ -24,6 +25,7 @@
     "autoprefixer": "^10.5.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "nodemon": "^3.1.14",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
     "typescript": "^5"

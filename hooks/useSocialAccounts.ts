@@ -1,6 +1,6 @@
 // hooks/useSocialAccounts.ts
 import { useState, useEffect } from 'react';
-import { getSocialAccounts } from '../lib/api/social-accounts';
+import { getSocialAccounts } from '../app/api/social-accounts';
 import { SocialAccount } from '@/types/social-account';
 
 export function useSocialAccounts() {
