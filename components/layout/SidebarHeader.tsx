@@ -1,9 +1,9 @@
 'use client';
-
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, PenLine, Calendar, MessageSquare, BarChart, Plus } from 'lucide-react';
+import { Home, PenLine, Calendar, MessageSquare, BarChart, Plus , LogOut,} from 'lucide-react';
 import { PostComposer } from '@/components/ui/PostComposer/PostComposer';
+  
 
 const navItems = [
     { name: 'Home', href: '/home', icon: Home },
