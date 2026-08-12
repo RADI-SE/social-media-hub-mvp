@@ -1,8 +1,18 @@
 import Link from "next/link";
 
-export default function BrandMark({ compact = false, href = "/home" }: { compact?: boolean; href?: string }) {
+export default function BrandMark({
+  compact = false,
+  href = "/home",
+}: {
+  compact?: boolean;
+  href?: string;
+}) {
   return (
-    <Link href={href} className="group flex items-center gap-3" aria-label="Spiders AI Hub home">
+    <Link
+      href={href}
+      className="group flex items-center gap-3"
+      aria-label="Spiders AI Hub home"
+    >
       <span className="brand-web" aria-hidden="true">
         <span />
       </span>

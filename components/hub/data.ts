@@ -1,11 +1,6 @@
 export type PostStatus = "Draft" | "Scheduled" | "Published";
 export type CommentClassification =
-  | "Lead"
-  | "Question"
-  | "Complaint"
-  | "Feedback"
-  | "Engagement"
-  | "Other";
+  "Lead" | "Question" | "Complaint" | "Feedback" | "Engagement" | "Other";
 export type TaskStatus = "Todo" | "InProgress" | "Completed";
 
 export interface SocialAccount {
@@ -88,7 +83,8 @@ export const posts: Post[] = [
     id: "post-01",
     userId: currentUser.id,
     socialAccountId: "account-01",
-    content: "Turn scattered customer conversations into clear, trackable action with Spiders AI.",
+    content:
+      "Turn scattered customer conversations into clear, trackable action with Spiders AI.",
     status: "Published",
     scheduledAt: "2026-08-09T10:00:00+03:00",
   },
@@ -96,7 +92,8 @@ export const posts: Post[] = [
     id: "post-02",
     userId: currentUser.id,
     socialAccountId: "account-02",
-    content: "One workspace for content planning, monitoring, analytics, and follow-up.",
+    content:
+      "One workspace for content planning, monitoring, analytics, and follow-up.",
     status: "Scheduled",
     scheduledAt: "2026-08-12T13:30:00+03:00",
   },
@@ -113,7 +110,8 @@ export const aiCaptions: AICaption[] = [
   {
     id: "caption-01",
     postId: "post-02",
-    caption: "From conversation to action - faster, clearer, and all in one place.",
+    caption:
+      "From conversation to action - faster, clearer, and all in one place.",
     language: "English",
   },
   {
@@ -213,4 +211,3 @@ export function accountFor(post: Post) {
 export function commentFor(task: FollowUpTask) {
   return comments.find((comment) => comment.id === task.commentId);
 }
-

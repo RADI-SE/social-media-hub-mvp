@@ -31,4 +31,3 @@ export const clerkAppearance = {
     alert: "rounded-xl",
   },
 };
-

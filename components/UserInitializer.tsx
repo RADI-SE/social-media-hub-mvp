@@ -10,7 +10,7 @@ export default function UserInitializer() {
   const { isSignedIn, isLoaded } = useAuth();
 
   const getOrCreateUser = useMutation(api.users.getOrCreate);
- 
+
   useEffect(() => {
     if (!isLoaded || !isSignedIn) {
       return;

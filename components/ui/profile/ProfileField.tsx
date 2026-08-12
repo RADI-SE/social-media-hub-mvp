@@ -43,7 +43,10 @@ export function ProfileField({
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label htmlFor={inputId} className="mb-1.5 block text-sm font-semibold text-slate-700">
+          <label
+            htmlFor={inputId}
+            className="mb-1.5 block text-sm font-semibold text-slate-700"
+          >
             {label}
           </label>
           <div className="relative">
@@ -55,7 +58,9 @@ export function ProfileField({
               placeholder={placeholder}
               disabled={isSaving}
               aria-invalid={Boolean(error)}
-              aria-describedby={error || helper || success ? messageId : undefined}
+              aria-describedby={
+                error || helper || success ? messageId : undefined
+              }
               className={`w-full rounded-xl border bg-white/85 px-4 py-3 pr-10 text-sm text-slate-700 outline-none ${
                 error
                   ? "border-rose-300 focus:ring-2 focus:ring-rose-100"
@@ -73,7 +78,11 @@ export function ProfileField({
             <p
               id={messageId}
               className={`mt-2 flex items-center gap-1.5 text-xs ${
-                error ? "text-rose-600" : success ? "text-emerald-700" : "text-slate-500"
+                error
+                  ? "text-rose-600"
+                  : success
+                    ? "text-emerald-700"
+                    : "text-slate-500"
               }`}
             >
               {success && <Check size={13} />}

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { WandSparkles, ArrowLeft } from 'lucide-react';
+import { useState } from "react";
+import { WandSparkles, ArrowLeft } from "lucide-react";
 
 interface AIAssistantPanelProps {
   isOpen: boolean;
@@ -18,7 +18,7 @@ export function AIAssistantPanel({
   channel,
   channelIcon,
 }: AIAssistantPanelProps) {
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   if (!isOpen) return null;
@@ -49,16 +49,21 @@ export function AIAssistantPanel({
           </button>
           <div className="flex items-center gap-1.5">
             <WandSparkles size={16} className="text-purple-600" />
-            <h4 className="text-sm font-semibold text-gray-800">AI Assistant</h4>
+            <h4 className="text-sm font-semibold text-gray-800">
+              AI Assistant
+            </h4>
           </div>
         </div>
-        
+
         <div className="text-gray-400">{channelIcon}</div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
         <form onSubmit={handleGenerate} className="space-y-3">
-          <label htmlFor="prompt" className="text-sm font-medium text-gray-700 block">
+          <label
+            htmlFor="prompt"
+            className="text-sm font-medium text-gray-700 block"
+          >
             What do you want to write about?
           </label>
           <textarea
@@ -76,7 +81,7 @@ export function AIAssistantPanel({
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <WandSparkles size={16} strokeWidth={2.2} />
-            {isGenerating ? 'Generating...' : 'Generate'}
+            {isGenerating ? "Generating..." : "Generate"}
           </button>
         </form>
       </div>

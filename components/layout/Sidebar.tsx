@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import BrandMark from "@/components/hub/BrandMark";
-import { useSocialAccounts } from "@/hooks/useSocialAccounts";
 import SidebarFooter from "./SidebarFooter";
 import SidebarHeader from "./SidebarHeader";
 
 export default function Sidebar() {
-  const { accounts, isLoading } = useSocialAccounts();
+  const { user } = useUser();
+  const userId = user?.id;
+  
+  const accounts = useQuery(api.socialAccounts.getAccountsForUser, { userId });
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[17.5rem] shrink-0 flex-col border-r border-white/70 bg-[#eaf8f7]/85 px-5 py-6 backdrop-blur-2xl md:flex">
@@ -16,19 +21,36 @@ export default function Sidebar() {
 
       <section className="mt-8 rounded-2xl border border-white bg-white/55 p-3.5">
         <div className="flex items-center justify-between">
-          <p className="text-[0.63rem] font-bold uppercase tracking-[0.17em] text-slate-400">Accounts</p>
-          <Link href="/settings/social-accounts" className="text-[0.62rem] font-bold text-[#2854dc] hover:text-[#173b9a]">Manage</Link>
+          <p className="text-[0.63rem] font-bold uppercase tracking-[0.17em] text-slate-400">
+            Accounts
+          </p>
+          <Link
+            href="connect/social-accounts"
+            className="text-[0.62rem] font-bold text-[#2854dc] hover:text-[#173b9a]"
+          >
+            Connect
+          </Link>
         </div>
         <div className="mt-3 space-y-2.5">
-          {isLoading ? <p className="text-xs text-slate-400">Loading accounts…</p> : accounts.map((account) => (
-            <div key={account._id} className="flex items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.14)]" />
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-700">{account.accountName}</p>
-                <p className="text-[0.62rem] text-slate-400">{account.platform}</p>
+          {accounts === undefined ? (
+            <p className="text-xs text-slate-400">Loading accounts…</p>
+          ) : accounts.length === 0 ? (
+            <p className="text-xs text-slate-400">No accounts connected.</p>
+          ) : (
+            accounts.map((account) => (
+              <div key={account._id} className="flex items-center gap-2.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.14)]" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-slate-700">
+                    {account.accountName}
+                  </p>
+                  <p className="text-[0.62rem] text-slate-400">
+                    {account.platform}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 

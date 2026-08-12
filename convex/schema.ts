@@ -2,7 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  
+
   users: defineTable({
     clerkUserId: v.string(),
     name: v.optional(v.string()),
@@ -10,10 +10,9 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_clerkUserId", ["clerkUserId"]),
 
- 
-  socialAccounts: defineTable({
-    userId: v.id("users"),
 
+  socialAccounts: defineTable({
+    userId: v.optional(v.string()),
     platform: v.union(
       v.literal("Instagram"),
       v.literal("Facebook"),
@@ -21,28 +20,30 @@ export default defineSchema({
       v.literal("TikTok"),
       v.literal("X"),
     ),
-
     accountName: v.string(),
     accountHandle: v.string(),
-
     status: v.union(
       v.literal("Connected"),
       v.literal("Disconnected"),
     ),
-
     createdAt: v.number(),
   })
     .index("by_userId", ["userId"])
     .index("by_platform", ["platform"]),
 
- 
   posts: defineTable({
     userId: v.id("users"),
     socialAccountId: v.id("socialAccounts"),
+ 
+    type: v.union(
+      v.literal("post"),
+      v.literal("comment"),
+    ),
 
     content: v.string(),
-
     mediaUrl: v.optional(v.string()),
+ 
+    targetUrl: v.optional(v.string()),
 
     status: v.union(
       v.literal("Draft"),
@@ -59,7 +60,8 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_socialAccountId", ["socialAccountId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_scheduledAt", ["scheduledAt"]),
 
 
   aiCaptions: defineTable({
@@ -71,7 +73,7 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_postId", ["postId"]),
 
- 
+
   analytics: defineTable({
     postId: v.id("posts"),
 

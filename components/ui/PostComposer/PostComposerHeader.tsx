@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { WandSparkles, ScanEye, X } from 'lucide-react';
+import { WandSparkles, ScanEye, X } from "lucide-react";
 
 interface HeaderProps {
   previewOpen: boolean;
   onTogglePreview: () => void;
-  aiOpen: boolean;           
-  onToggleAI: () => void;    
+  aiOpen: boolean;
+  onToggleAI: () => void;
   onClose: () => void;
 }
 
@@ -24,28 +24,34 @@ export function PostComposerHeader({
         <p className="text-sm text-gray-500">Create and edit posts</p>
       </div>
       <div className="flex items-center gap-3">
- 
-         <button
+        <button
           onClick={onToggleAI}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md ${
-            aiOpen ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+            aiOpen
+              ? "bg-blue-50 text-blue-700"
+              : "text-gray-700 hover:bg-gray-100"
           }`}
         >
           <WandSparkles size={16} strokeWidth={2.2} />
           <span>AI Assistant</span>
         </button>
- 
+
         <button
           onClick={onTogglePreview}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md ${
-            previewOpen ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+            previewOpen
+              ? "bg-blue-50 text-blue-700"
+              : "text-gray-700 hover:bg-gray-100"
           }`}
         >
           <ScanEye size={16} strokeWidth={2.2} />
           <span>Preview</span>
         </button>
- 
-        <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+
+        <button
+          onClick={onClose}
+          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+        >
           <X size={16} strokeWidth={2.2} />
         </button>
       </div>
