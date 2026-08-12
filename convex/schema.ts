@@ -64,16 +64,6 @@ export default defineSchema({
     .index("by_scheduledAt", ["scheduledAt"]),
 
 
-  aiCaptions: defineTable({
-    postId: v.id("posts"),
-
-    caption: v.string(),
-    language: v.string(),
-
-    createdAt: v.number(),
-  }).index("by_postId", ["postId"]),
-
-
   analytics: defineTable({
     postId: v.id("posts"),
 

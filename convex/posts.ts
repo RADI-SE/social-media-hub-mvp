@@ -1,38 +1,8 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
- 
-export const getScheduledItems = query({
-  handler: async (ctx) => {
-    const now = Date.now();
-    return await ctx.db
-      .query("posts")
-      .withIndex("by_status", (q) => q.eq("status", "Scheduled"))
-      .filter((q) => q.lte(q.field("scheduledAt"), now))
-      .collect();
-  },
-});
- 
-export const markItemPublished = mutation({
-  args: { postId: v.id("posts") },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.postId, {
-      status: "Published",
-      publishedAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-  },
-});
- 
-export const markItemFailed = mutation({
-  args: { postId: v.id("posts"), error: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.postId, {
-      status: "Failed",
-      updatedAt: Date.now(),
-    });
-  },
-});
- 
+
+// --- Scheduling ---
+
 export const schedulePost = mutation({
   args: {
     userId: v.id("users"),
@@ -42,7 +12,7 @@ export const schedulePost = mutation({
     mediaUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const id = await ctx.db.insert("posts", {
+    return await ctx.db.insert("posts", {
       userId: args.userId,
       socialAccountId: args.socialAccountId,
       type: "post",
@@ -53,10 +23,9 @@ export const schedulePost = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-    return id;
   },
 });
- 
+
 export const scheduleComment = mutation({
   args: {
     userId: v.id("users"),
@@ -66,7 +35,7 @@ export const scheduleComment = mutation({
     scheduledAt: v.number(),
   },
   handler: async (ctx, args) => {
-    const id = await ctx.db.insert("posts", {
+    return await ctx.db.insert("posts", {
       userId: args.userId,
       socialAccountId: args.socialAccountId,
       type: "comment",
@@ -77,10 +46,56 @@ export const scheduleComment = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-    return id;
   },
 });
- 
+
+// --- Query due items (for cron) ---
+export const getScheduledItems = query({
+  handler: async (ctx) => {
+    const now = Date.now();
+    return await ctx.db
+      .query("posts")
+      .withIndex("by_status", (q) => q.eq("status", "Scheduled"))
+      .filter((q) => q.lte(q.field("scheduledAt"), now))
+      .collect();
+  },
+});
+
+// --- Mark as published/failed ---
+export const markItemPublished = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.postId, {
+      status: "Published",
+      publishedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const markItemFailed = mutation({
+  args: { postId: v.id("posts"), error: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.postId, {
+      status: "Failed",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// --- List scheduled items for a user ---
+export const getScheduledItemsForUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("posts")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "Scheduled"))
+      .collect();
+  },
+});
+
+// --- Cancel a scheduled item ---
 export const cancelScheduledItem = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -89,15 +104,15 @@ export const cancelScheduledItem = mutation({
     if (item.status !== "Scheduled") throw new Error("Can only cancel scheduled items");
     await ctx.db.delete(args.postId);
   },
-});
- 
-export const getScheduledItemsForUser = query({
+}); 
+
+export const getPublishedPostsForUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("posts")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "Scheduled"))
+      .filter((q) => q.eq(q.field("status"), "Published"))
       .collect();
   },
 });
