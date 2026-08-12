@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Eye, Heart, Loader2, MessageCircleMore, TrendingUp, Users } from "lucide-react";
 import { useQueries, useQuery } from "convex/react";
 import PageHeader from "@/components/hub/PageHeader";
@@ -48,14 +49,16 @@ export default function AnalyticsOverview() {
 }
 
 function AnalyticsContent({ posts }: { posts: Doc<"posts">[] }) {
-  const results = useQueries(
-    Object.fromEntries(
+  const analyticsQueries = useMemo(
+    () => Object.fromEntries(
       posts.map((post) => [
         post._id,
         { query: api.analytics.getAnalyticsForPost, args: { postId: post._id } },
       ]),
     ),
+    [posts],
   );
+  const results = useQueries(analyticsQueries);
 
   const isLoading = posts.some((post) => results[post._id] === undefined);
   const queryError = posts.find((post) => results[post._id] instanceof Error);

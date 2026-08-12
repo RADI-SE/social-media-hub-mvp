@@ -1,89 +1,23 @@
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import PageHeader from "@/components/hub/PageHeader";
-import { accountFor, posts } from "@/components/hub/data";
+"use client";
 
-const days = Array.from({ length: 31 }, (_, index) => index + 1);
+import Link from "next/link";
+import { Loader2, Plus } from "lucide-react";
+import { useQuery } from "convex/react";
+import PageHeader from "@/components/hub/PageHeader";
+import { api } from "@/convex/_generated/api";
+
 export default function ContentCalendar() {
-  const scheduled = posts.filter((post) => post.scheduledAt);
+  const user = useQuery(api.users.current);
+  const scheduled = useQuery(api.posts.getScheduledItemsForUser, user ? { userId: user._id } : "skip");
+  const accounts = useQuery(api.socialAccounts.getAccountsForUser, user ? { userId: user.clerkUserId } : "skip");
+  const loading = user === undefined || Boolean(user && (scheduled === undefined || accounts === undefined));
+
   return (
     <>
-      <PageHeader
-        eyebrow="Publishing"
-        title="Content calendar"
-        description="Scheduled and published posts by date. Drafts remain in the posts view until a date is assigned."
-        action={
-          <Link
-            href="/create"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white"
-          >
-            <Plus size={16} />
-            Schedule post
-          </Link>
-        }
-      />
+      <PageHeader eyebrow="Publishing" title="Scheduled content" description="Posts waiting to be published by the scheduling service." action={<Link href="/create/post" className="inline-flex items-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white"><Plus size={16} />Schedule post</Link>} />
       <section className="glass-card overflow-hidden rounded-3xl">
-        <header className="flex items-center justify-between border-b border-slate-100 px-5 py-5 sm:px-7">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#3556d9]">
-              August
-            </p>
-            <h2 className="mt-1 text-xl font-semibold">2026</h2>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              aria-label="Previous month"
-              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-500"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              aria-label="Next month"
-              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-500"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </header>
-        <div className="grid grid-cols-7 border-b border-slate-100 bg-white/45 text-center text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-400">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-            <div key={day} className="py-3">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 soft-grid">
-          {days.map((day) => {
-            const dayPosts = scheduled.filter(
-              (post) => new Date(post.scheduledAt!).getDate() === day,
-            );
-            return (
-              <div
-                key={day}
-                className="min-h-24 border-b border-r border-blue-900/5 p-2 sm:min-h-32 sm:p-3"
-              >
-                <span
-                  className={`grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${day === 11 ? "bg-[#173b9a] text-white" : "text-slate-500"}`}
-                >
-                  {day}
-                </span>
-                <div className="mt-2 space-y-1.5">
-                  {dayPosts.map((post) => (
-                    <article
-                      key={post.id}
-                      className={`rounded-lg border px-2 py-1.5 text-[0.62rem] leading-4 ${post.status === "Published" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-blue-200 bg-blue-50 text-blue-800"}`}
-                    >
-                      <p className="font-bold">{accountFor(post)?.platform}</p>
-                      <p className="hidden truncate sm:block">{post.content}</p>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <div className="hidden grid-cols-[0.8fr_2fr_1fr] gap-5 border-b border-slate-100 px-6 py-4 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-slate-400 md:grid"><span>Platform</span><span>Content</span><span>Scheduled for</span></div>
+        {loading ? <div className="flex min-h-56 items-center justify-center text-sm text-slate-500"><Loader2 size={18} className="mr-2 animate-spin" />Loading schedule…</div> : !user ? <p className="px-6 py-12 text-center text-sm text-slate-500">Sign in again to load your schedule.</p> : scheduled?.length ? <div className="divide-y divide-slate-100">{[...scheduled].sort((a, b) => (a.scheduledAt ?? 0) - (b.scheduledAt ?? 0)).map((post) => { const account = accounts?.find((item) => item._id === post.socialAccountId); return <article key={post._id} className="grid gap-3 px-6 py-5 md:grid-cols-[0.8fr_2fr_1fr] md:items-center"><div><p className="text-sm font-semibold text-[#173b9a]">{account?.platform ?? "Social"}</p><p className="text-xs text-slate-400">{account?.accountName ?? "Account"}</p></div><p className="text-sm leading-6 text-slate-700">{post.content}</p><p className="text-xs text-slate-500">{post.scheduledAt ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(post.scheduledAt)) : "Schedule unavailable"}</p></article>; })}</div> : <p className="px-6 py-12 text-center text-sm text-slate-500">No scheduled posts yet.</p>}
       </section>
     </>
   );
