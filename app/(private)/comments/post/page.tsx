@@ -7,48 +7,43 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
-import { publishPost } from "@/lib/api";
+import { publishComment } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
 
-export default function CreatePage() {
+export default function CommentPage() {
   const router = useRouter();
   const { user } = useUser();
   const userId = user?.id;
+  const userName = user?.fullName || user?.username || "You";
 
   const [isPosting, setIsPosting] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
 
-  const schedulePost = useMutation(api.posts.schedulePost);
-  const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
+  const createComment = useMutation(api.comments.createComment);
+  const scheduleComment = useMutation(api.comments.scheduleComment);
 
-  // --- Immediate post ---
-  const handlePost = async (content: string, platform: Platform) => {
-    if (!userId) {
-      toast.error("You must be logged in.");
+  const handlePost = async (content: string, _platform: Platform, targetUrl?: string) => {
+    if (!userId || !targetUrl) {
+      toast.error("Missing user or post URL.");
       return;
     }
 
     setIsPosting(true);
-    const loadingToast = toast.loading("Publishing...");
+    const loadingToast = toast.loading("Posting comment...");
 
-    try {
-      // 1. Execute via Script Server
-      const result = await publishPost(userId, content);
-      if (!result.success) {
-        toast.dismiss(loadingToast);
-        toast.error(result.error || "Execution failed");
-        return;
-      }
-
-      // 2. Save to Team DB
-      await recordPublishedPost({
+    try { 
+      await publishComment(userId, targetUrl, content);
+ 
+      await createComment({
         userId,
-        platform,
+        targetUrl,
+        authorName: userName,
         content,
+        classification: "Engagement",
       });
 
       toast.dismiss(loadingToast);
-      toast.success("Post published!");
+      toast.success("Comment posted!");
       router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
@@ -58,25 +53,26 @@ export default function CreatePage() {
     }
   };
 
-  // --- Scheduled post ---
-  const handleSchedule = async (content: string, scheduledAt: number, platform: Platform) => {
-    if (!userId) {
-      toast.error("You must be logged in.");
+  const handleSchedule = async (content: string, scheduledAt: number, _platform: Platform, targetUrl?: string) => {
+    if (!userId || !targetUrl) {
+      toast.error("Missing user or post URL.");
       return;
     }
 
     setIsScheduling(true);
-    const loadingToast = toast.loading("Scheduling...");
+    const loadingToast = toast.loading("Scheduling comment...");
 
-    try {
-      await schedulePost({
+    try {  
+      await scheduleComment({
         userId,
-        platform,
+        targetUrl,
+        authorName: userName,
         content,
         scheduledAt,
+        classification: "Engagement",
       });
       toast.dismiss(loadingToast);
-      toast.success("Post scheduled!");
+      toast.success("Comment scheduled!");
       router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
@@ -93,6 +89,7 @@ export default function CreatePage() {
   return (
     <PostComposer
       isOpen={true}
+      mode="comment"
       onClose={handleClose}
       onPost={handlePost}
       onSchedule={handleSchedule}

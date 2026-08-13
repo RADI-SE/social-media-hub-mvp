@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/hub/PageHeader";
-import { posts } from "@/components/hub/data";
 import PostCard from "./PostCard";
-
-export default function PostList() {
+ 
+export default function PostList({ posts }: { posts: any[] }) {
   return (
     <>
       <PageHeader
@@ -30,9 +29,13 @@ export default function PostList() {
           <span>Post</span>
         </div>
         <div className="divide-y divide-slate-100">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+          {posts.length === 0 ? (
+            <div className="px-6 py-12 text-center text-sm text-slate-400">
+              No posts or comments yet.
+            </div>
+          ) : (
+            posts.map((post) => <PostCard key={post._id} post={post} />)
+          )}
         </div>
       </section>
     </>

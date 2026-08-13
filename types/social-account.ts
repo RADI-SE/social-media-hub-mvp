@@ -5,3 +5,5 @@ export interface SocialAccount {
   platform: string;
   accountName: string;
 }
+
+export type Platform = "Instagram" | "Facebook" | "LinkedIn" | "TikTok" | "X";

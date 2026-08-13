@@ -1,9 +1,7 @@
-// lib/api.ts
 
 const SCRIPT_URL = process.env.NEXT_PUBLIC_SCRIPT_SERVER_URL || "http://localhost:3000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
-
-// --- Publish a post (immediate) ---
+ 
 export async function publishPost(userId: string, content: string) {
   const response = await fetch(`${SCRIPT_URL}/api/post`, {
     method: "POST",
@@ -16,9 +14,9 @@ export async function publishPost(userId: string, content: string) {
   if (!response.ok) throw new Error(`Failed to publish post: ${response.statusText}`);
   return response.json();
 }
-
-// --- Publish a comment (immediate) ---
+ 
 export async function publishComment(userId: string, postUrl: string, content: string) {
+  console.log("📌 publishComment called with:", { userId, postUrl, content });
   const response = await fetch(`${SCRIPT_URL}/api/comment`, {
     method: "POST",
     headers: {
@@ -27,8 +25,7 @@ export async function publishComment(userId: string, postUrl: string, content: s
     },
     body: JSON.stringify({ userId, postUrl, message: content }),
   });
-  if (!response.ok) throw new Error(`Failed to publish comment: ${response.statusText}`);
-  return response.json();
+  // ...
 }
 
 // --- Schedule a post ---

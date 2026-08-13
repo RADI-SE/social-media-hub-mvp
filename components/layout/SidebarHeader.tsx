@@ -10,14 +10,12 @@ import {
   FileText,
   LayoutDashboard,
   MessageCircleMore,
-  PenLine,
   Calendar,
   Plus
 } from "lucide-react";
 
 const navItems = [
   { name: "Overview", href: "/home", icon: LayoutDashboard },
-  // { name: "Create post", href: "/create/post", icon: PenLine },
   { name: "Calendar", href: "/schedule", icon: CalendarDays },
   { name: "Posts", href: "/posts", icon: FileText },
   { name: "Comments", href: "/comments", icon: MessageCircleMore },
@@ -27,6 +25,7 @@ const navItems = [
 
 const dropdownItems = [
   { name: 'New Post', href: '/create/post' },
+  { name: 'Add Comment', href: '/comments/post' },
   { name: 'New Schedule', href: '/schedule' },
 ];
 

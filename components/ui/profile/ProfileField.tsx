@@ -1,4 +1,5 @@
 import { Check, Loader2, TriangleAlert } from "lucide-react";
+import { FormMessage } from "@/components/ui/FormMessage"; // adjust import path
 
 type ProfileFieldProps = {
   label: string;
@@ -31,6 +32,10 @@ export function ProfileField({
 }: ProfileFieldProps) {
   const inputId = `profile-${label.toLowerCase().replace(/\s+/g, "-")}`;
   const messageId = `${inputId}-message`;
+
+  // Determine message type and content
+  const messageType = error ? "error" : success ? "success" : "info";
+  const messageContent = error || success || helper;
 
   return (
     <form
@@ -74,20 +79,12 @@ export function ProfileField({
               />
             )}
           </div>
-          {(error || success || helper) && (
-            <p
-              id={messageId}
-              className={`mt-2 flex items-center gap-1.5 text-xs ${
-                error
-                  ? "text-rose-600"
-                  : success
-                    ? "text-emerald-700"
-                    : "text-slate-500"
-              }`}
-            >
-              {success && <Check size={13} />}
-              {error || success || helper}
-            </p>
+          {messageContent && (
+            <FormMessage
+              type={messageType}
+              message={messageContent}
+              className="mt-2"
+            />
           )}
         </div>
         <button

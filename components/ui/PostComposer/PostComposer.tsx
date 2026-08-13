@@ -8,15 +8,19 @@ import { PreviewSidebar } from "./PreviewSidebar";
 import { PostComposerFooter } from "./PostComposerFooter";
 import { AIAssistantPanel } from "./AIAssistantPanel";
 import { TwitterIcon, FacebookIcon } from "../ChannelIcons";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Link2 } from "lucide-react";
+import { toast } from "sonner";
+import { type Platform } from "@/types/social-account";
 
 interface PostComposerProps {
   isOpen: boolean;
   onClose: () => void;
-  onPost?: (content: string) => void;
-  onSchedule?: (content: string, scheduledAt: number) => void;
+  onPost?: (content: string, platform: Platform, targetUrl?: string) => void;
+  onSchedule?: (content: string, scheduledAt: number, platform: Platform, targetUrl?: string) => void;
   isPosting?: boolean;
-  isScheduling?: boolean; 
+  isScheduling?: boolean;
+  mode?: "post" | "comment";
+  initialTargetUrl?: string;
 }
 
 export function PostComposer({
@@ -25,7 +29,9 @@ export function PostComposer({
   onPost,
   onSchedule,
   isPosting = false,
-  isScheduling = false, 
+  isScheduling = false,
+  mode = "post",
+  initialTargetUrl = "",
 }: PostComposerProps) {
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [content, setContent] = useState("");
@@ -33,8 +39,17 @@ export function PostComposer({
   const [aiOpen, setAiOpen] = useState(false);
   const [scheduledTime, setScheduledTime] = useState<string>("");
   const [showScheduler, setShowScheduler] = useState(false);
+  const [targetUrl, setTargetUrl] = useState(initialTargetUrl);
 
   const backdropRef = useRef<HTMLDivElement>(null);
+
+  const platformMap: Record<string, Platform> = {
+    facebook: "Facebook",
+    twitter: "X",
+    instagram: "Instagram",
+    linkedin: "LinkedIn",
+    tiktok: "TikTok",
+  };
 
   const getChannelIcon = (channelId: string) => {
     switch (channelId) {
@@ -74,27 +89,61 @@ export function PostComposer({
       setPreviewOpen(false);
     }
   };
-
   const handlePost = () => {
+      console.log("🔵 handlePost called, targetUrl:", targetUrl);
+
+    if (mode === "comment") {
+      const trimmedUrl = targetUrl.trim();
+      if (!trimmedUrl) {
+        toast.error("Please enter a post URL.");
+        return;
+      }
+      try {
+        new URL(trimmedUrl);
+      } catch {
+        toast.error("Please enter a valid URL (e.g., https://www.facebook.com/...)");
+        return;
+      }
+    }
     if (onPost && content.trim()) {
-      onPost(content);
+      const platform = selectedChannels.length > 0
+        ? platformMap[selectedChannels[0]]
+        : "Facebook";
+      onPost(content, platform, mode === "comment" ? targetUrl : undefined);
     }
   };
 
   const handleSchedule = () => {
     if (!scheduledTime) {
-      alert("Please select a date and time.");
+      toast.error("Please select a date and time.");
       return;
     }
     const timestamp = new Date(scheduledTime).getTime();
     if (timestamp <= Date.now()) {
-      alert("Scheduled time must be in the future.");
+      toast.error("Scheduled time must be in the future.");
       return;
     }
+    if (mode === "comment") {
+      const trimmedUrl = targetUrl.trim();
+      if (!trimmedUrl) {
+        toast.error("Please enter a post URL.");
+        return;
+      }
+      try {
+        new URL(trimmedUrl);
+      } catch {
+        toast.error("Please enter a valid URL.");
+        return;
+      }
+    }
     if (onSchedule && content.trim()) {
-      onSchedule(content, timestamp);
+      const platform = selectedChannels.length > 0
+        ? platformMap[selectedChannels[0]]
+        : "Facebook";
+      onSchedule(content, timestamp, platform, mode === "comment" ? targetUrl : undefined);
       setShowScheduler(false);
       setScheduledTime("");
+      if (mode === "comment") setTargetUrl("");
     }
   };
 
@@ -107,9 +156,8 @@ export function PostComposer({
       onClick={handleBackdropClick}
     >
       <div
-        className={`relative bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden w-[90vw] transition-all duration-200 ${
-          previewOpen ? "max-w-6xl" : "max-w-3xl"
-        }`}
+        className={`relative bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden w-[90vw] transition-all duration-200 ${previewOpen ? "max-w-6xl" : "max-w-3xl"
+          }`}
       >
         <PostComposerHeader
           previewOpen={previewOpen}
@@ -125,8 +173,29 @@ export function PostComposer({
               selected={selectedChannels}
               onToggle={toggleChannel}
             />
+
+            {mode === "comment" && (
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  Facebook Post URL
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={targetUrl}
+                    onChange={(e) => setTargetUrl(e.target.value)}
+                    placeholder="https://www.facebook.com/share/p/..."
+                    className="w-full border border-gray-200 rounded-md p-4 focus-within:ring-2 focus-within:ring-blue-500 px-4 py-3 pl-10"
+                  />
+                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Paste the full Facebook post link (e.g., https://www.facebook.com/share/p/1Up3sopZMV/)
+                </p>
+              </div>
+            )}
             <ContentEditor value={content} onChange={setContent} />
- 
+
             <div className="mt-4">
               <button
                 onClick={() => setShowScheduler(!showScheduler)}
@@ -142,7 +211,6 @@ export function PostComposer({
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
                     className="border rounded px-2 py-1 text-sm"
-                    min={new Date().toISOString().slice(0, 16)}
                   />
                   <button
                     onClick={handleSchedule}
@@ -154,7 +222,6 @@ export function PostComposer({
                 </div>
               )}
             </div>
-
           </div>
 
           {previewOpen && !aiOpen && <PreviewSidebar content={content} />}
@@ -172,7 +239,11 @@ export function PostComposer({
           selectedCount={selectedChannels.length}
           onPost={handlePost}
           isPosting={isPosting}
-          isDisabled={!content.trim() || selectedChannels.length === 0}
+          isDisabled={
+            !content.trim() ||
+            selectedChannels.length === 0 ||
+            (mode === "comment" && !targetUrl.trim())
+          }
         />
       </div>
     </div>
