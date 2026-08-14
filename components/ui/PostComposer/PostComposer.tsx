@@ -90,7 +90,7 @@ export function PostComposer({
     }
   };
   const handlePost = () => {
-      console.log("🔵 handlePost called, targetUrl:", targetUrl);
+    console.log("🔵 handlePost called, targetUrl:", targetUrl);
 
     if (mode === "comment") {
       const trimmedUrl = targetUrl.trim();
@@ -228,9 +228,11 @@ export function PostComposer({
           {aiOpen && !previewOpen && (
             <AIAssistantPanel
               isOpen={aiOpen}
+              onClose={handleToggleAI}
               onApplyContent={setContent}
+              channel={selectedChannels[0] || "Facebook"}
               channelIcon={getChannelIcon(selectedChannels[0] || "")}
-              onClose={() => setAiOpen(false)}
+              mode={mode} 
             />
           )}
         </div>

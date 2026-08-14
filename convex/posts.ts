@@ -32,6 +32,19 @@ export const recordPublishedPost = mutation({
   },
 });
 
+
+// Get published posts for a user (for analytics)
+export const getPublishedPostsForUser = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("posts")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "Published"))
+      .collect();
+  },
+});
+
 // --- Schedule a post ---
 export const schedulePost = mutation({
   args: {

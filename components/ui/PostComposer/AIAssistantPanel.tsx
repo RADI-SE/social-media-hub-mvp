@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { WandSparkles, ArrowLeft } from "lucide-react";
+import { WandSparkles, ArrowLeft, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 interface AIAssistantPanelProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface AIAssistantPanelProps {
   onApplyContent: (newContent: string) => void;
   channel?: string;
   channelIcon?: React.ReactNode;
+  mode?: "post" | "comment";
 }
 
 export function AIAssistantPanel({
@@ -17,53 +19,77 @@ export function AIAssistantPanel({
   onApplyContent,
   channel,
   channelIcon,
+  mode = "post",
 }: AIAssistantPanelProps) {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedOptions, setGeneratedOptions] = useState<string[]>([]);
 
   if (!isOpen) return null;
 
-  const handleGenerate = (e: React.FormEvent) => {
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
     setIsGenerating(true);
+    setGeneratedOptions([]);
+    try {
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: prompt,
+          tone: "engaging",
+          platform: channel || "Facebook",
+          length: "short",
+          type: mode,
+          variations: 3,
+        }),
+      });
 
-    setTimeout(() => {
-      const generatedText = `[AI‑generated] Based on: "${prompt}". Here’s your post.`;
-      onApplyContent(generatedText);
+      const data = await response.json();
+      if (data.success && data.captions && data.captions.length > 0) {
+        setGeneratedOptions(data.captions);
+        toast.success(`${data.captions.length} options generated!`);
+      } else {
+        toast.error(data.error || "Failed to generate.");
+      }
+    } catch (error) {
+      toast.error("Failed to generate.");
+      console.error(error);
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
+  };
+
+  const handleApply = (content: string) => {
+    onApplyContent(content);
+    toast.success(mode === "comment" ? "Reply inserted!" : "Caption inserted!");
+    setGeneratedOptions([]);
+    setPrompt("");
   };
 
   return (
     <div className="w-80 border-l border-gray-200 bg-gray-50 flex flex-col h-full overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="p-1 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label="Go back"
-          >
-            <ArrowLeft size={16} strokeWidth={2.2} />
-          </button>
-          <div className="flex items-center gap-1.5">
-            <WandSparkles size={16} className="text-purple-600" />
-            <h4 className="text-sm font-semibold text-gray-800">
-              AI Assistant
-            </h4>
-          </div>
+        <button
+          onClick={onClose}
+          className="p-1 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft size={16} strokeWidth={2.2} />
+        </button>
+        <div className="flex items-center gap-1.5">
+          <WandSparkles size={16} className="text-purple-600" />
+          <h4 className="text-sm font-semibold text-gray-800">AI Assistant</h4>
         </div>
-
         <div className="text-gray-400">{channelIcon}</div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <form onSubmit={handleGenerate} className="space-y-3">
-          <label
-            htmlFor="prompt"
-            className="text-sm font-medium text-gray-700 block"
-          >
+        {/* Input form */}
+        <form onSubmit={handleGenerate} className="space-y-3 mb-4">
+          <label htmlFor="prompt" className="text-sm font-medium text-gray-700 block">
             What do you want to write about?
           </label>
           <textarea
@@ -71,8 +97,11 @@ export function AIAssistantPanel({
             name="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Eg. Promote my photography course to get new signups. Registration closes in 3 days."
-            rows={6}
+            placeholder={mode === "comment" 
+              ? "Eg. Reply to a customer asking about shipping..." 
+              : "Eg. Promote my photography course..."
+            }
+            rows={4}
             className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           <button
@@ -81,9 +110,33 @@ export function AIAssistantPanel({
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <WandSparkles size={16} strokeWidth={2.2} />
-            {isGenerating ? "Generating..." : "Generate"}
+            {isGenerating ? "Generating..." : "Generate 3 Options"}
           </button>
         </form>
+
+        {/* Generated options */}
+        {generatedOptions.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Choose an option:
+            </p>
+            {generatedOptions.map((option, index) => (
+              <div
+                key={index}
+                className="border rounded-md bg-white p-3 hover:shadow-md transition-shadow"
+              >
+                <p className="text-sm text-gray-700 mb-2">{option}</p>
+                <button
+                  onClick={() => handleApply(option)}
+                  className="text-xs text-purple-600 hover:underline font-medium flex items-center gap-1"
+                >
+                  <Sparkles size={12} />
+                  Apply
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
