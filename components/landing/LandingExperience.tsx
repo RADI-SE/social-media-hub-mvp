@@ -24,7 +24,7 @@ export default function LandingExperience({ signedIn }: { signedIn: boolean }) {
             Catch every signal.<span>Turn it into motion.</span>
           </h1>
           <p className="mt-7 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-            Spiders AI brings publishing, customer conversations, demo
+            Spiders AI brings publishing, customer conversations, mock
             analytics, and follow-up into one intelligent marketing workspace.
           </p>
           <SessionActions signedIn={signedIn} placement="hero" />
@@ -35,7 +35,7 @@ export default function LandingExperience({ signedIn }: { signedIn: boolean }) {
             </span>
             <span className="flex items-center gap-2">
               <CheckCircle2 size={15} className="text-emerald-500" />
-              Clearly labeled demo data
+              Clearly labeled mock analytics
             </span>
             <span className="flex items-center gap-2">
               <CheckCircle2 size={15} className="text-emerald-500" />

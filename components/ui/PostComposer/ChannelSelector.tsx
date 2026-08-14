@@ -1,6 +1,6 @@
 "use client";
 
-import { TwitterIcon, FacebookIcon } from "../ChannelIcons";
+import { FacebookIcon } from "../ChannelIcons";
 
 type Channel = {
   id: string;
@@ -9,7 +9,6 @@ type Channel = {
 };
 
 const CHANNELS: Channel[] = [
-  { id: "twitter", label: "X / Twitter", icon: TwitterIcon },
   { id: "facebook", label: "Facebook", icon: FacebookIcon },
 ];
 

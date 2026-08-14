@@ -7,15 +7,14 @@ import {
   Share2,
   MoreHorizontal,
   Info,
-  Image,
+  Image as ImageIcon,
   FileText,
-  Layout,
   Eye,
 } from "lucide-react";
 
-import { FacebookIcon, TwitterIcon } from "../ChannelIcons";
+import { FacebookIcon } from "../ChannelIcons";
 
-type Channel = "facebook" | "twitter" | "default";
+type Channel = "facebook" | "default";
 
 interface PreviewSidebarProps {
   content?: string;
@@ -31,7 +30,6 @@ export function PreviewSidebar({
   const tabs: { id: Channel; icon: React.ReactNode }[] = [
     { id: "default", icon: <Eye className="w-4 h-4" /> },
     { id: "facebook", icon: <FacebookIcon className="w-4 h-4" /> },
-    { id: "twitter", icon: <TwitterIcon className="w-4 h-4" /> },
   ];
 
   return (
@@ -45,6 +43,10 @@ export function PreviewSidebar({
         {tabs.map(({ id, icon }) => (
           <button
             key={id}
+            type="button"
+            aria-label={
+              id === "default" ? "General preview" : "Facebook preview"
+            }
             onClick={() => setActiveChannel(id)}
             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
               activeChannel === id
@@ -60,26 +62,18 @@ export function PreviewSidebar({
       <div className="flex-1">
         {activeChannel === "default" && <ByDefault />}
         {activeChannel === "facebook" && <FacebookPreview content={content} />}
-        {activeChannel === "twitter" && <TwitterPreview content={content} />}
       </div>
     </aside>
   );
 }
 
 function FacebookPreview({ content }: { content: string }) {
-  const user = {
-    name: "mx",
-    avatar: "",
-  };
+  const user = { name: "Spiders AI" };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="flex items-start gap-3 p-3">
-        <img
-          src={user.avatar}
-          alt={user.name}
-          className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"
-        />
+        <Avatar name={user.name} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-800 truncate">
             {user.name}
@@ -96,63 +90,33 @@ function FacebookPreview({ content }: { content: string }) {
         </p>
       </div>
       <div className="flex items-center justify-around border-t border-gray-100 px-2 py-1">
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-md">
+        <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500">
           <Heart size={16} strokeWidth={1.5} /> <span>Like</span>
-        </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-md">
+        </span>
+        <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500">
           <MessageCircle size={16} strokeWidth={1.5} /> <span>Comment</span>
-        </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-md">
+        </span>
+        <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500">
           <Share2 size={16} strokeWidth={1.5} /> <span>Share</span>
-        </button>
+        </span>
       </div>
     </div>
   );
 }
 
-function TwitterPreview({ content }: { content: string }) {
-  const user = {
-    name: "njl",
-    handle: "dnj",
-    avatar: "",
-  };
-
+function Avatar({ name }: { name: string }) {
+  const initials = name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="flex items-start gap-3 p-3">
-        <img
-          src={user.avatar}
-          alt={user.name}
-          className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"
-        />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">
-            {user.name}
-            <span className="text-gray-500 font-normal ml-1">
-              @{user.handle}
-            </span>
-          </p>
-          <p className="text-xs text-gray-500">Just Now</p>
-        </div>
-        <MoreHorizontal size={16} className="text-gray-400 flex-shrink-0" />
-      </div>
-      <div className="px-3 pb-2">
-        <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">
-          {content}
-        </p>
-      </div>
-      <div className="flex items-center justify-around border-t border-gray-100 px-2 py-1">
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-md">
-          <Heart size={16} strokeWidth={1.5} /> <span>Like</span>
-        </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-md">
-          <MessageCircle size={16} strokeWidth={1.5} /> <span>Reply</span>
-        </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-md">
-          <Share2 size={16} strokeWidth={1.5} /> <span>Retweet</span>
-        </button>
-      </div>
-    </div>
+    <span
+      aria-label={`${name} avatar`}
+      className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#c4ffe6] to-[#7590ff] text-xs font-bold text-[#09276b]"
+    >
+      {initials}
+    </span>
   );
 }
 
@@ -162,7 +126,7 @@ function ByDefault() {
       <div className="text-center space-y-4">
         <div className="relative inline-block">
           <div className="w-24 h-24 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
-            <Image size={40} className="text-gray-400" strokeWidth={1.5} />
+            <ImageIcon size={40} className="text-gray-400" strokeWidth={1.5} />
           </div>
           <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-sm border border-gray-200">
             <FileText size={16} className="text-gray-500" />

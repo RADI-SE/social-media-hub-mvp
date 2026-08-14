@@ -11,7 +11,7 @@ import SidebarHeader from "./SidebarHeader";
 export default function Sidebar() {
   const { user } = useUser();
   const userId = user?.id;
-  
+
   const accounts = useQuery(api.socialAccounts.getAccountsForUser, { userId });
 
   return (
@@ -25,7 +25,7 @@ export default function Sidebar() {
             Accounts
           </p>
           <Link
-            href="connect/social-accounts"
+            href="/connect/social-accounts"
             className="text-[0.62rem] font-bold text-[#2854dc] hover:text-[#173b9a]"
           >
             Connect

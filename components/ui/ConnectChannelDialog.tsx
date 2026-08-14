@@ -1,20 +1,18 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { ConnectChannelDialogProps } from './ConnectChannelDialog/types';
-import { defaultChannels } from './ConnectChannelDialog/defaultChannels';
-import { DialogHeader } from './ConnectChannelDialog/DialogHeader';
-import { DialogBody } from './ConnectChannelDialog/DialogBody';
+import { useRef } from "react";
+import { ConnectChannelDialogProps } from "./ConnectChannelDialog/types";
+import { defaultChannels } from "./ConnectChannelDialog/defaultChannels";
+import { DialogHeader } from "./ConnectChannelDialog/DialogHeader";
+import { DialogBody } from "./ConnectChannelDialog/DialogBody";
 
 export function ConnectChannelDialog({
   isOpen,
   onClose,
   onConnect,
-  onRequestChannel,
   channels = defaultChannels,
-  showRequestChannel = true,
-  title = 'Connect a channel',
-  description = 'Connect a social media channel to Spiders AI · Social Media Marketing Hub MVP.',
+  title = "Connect a channel",
+  description = "Connect a social media channel to Spiders AI · Social Media Marketing Hub MVP.",
 }: ConnectChannelDialogProps) {
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -26,19 +24,6 @@ export function ConnectChannelDialog({
 
   const handleChannelClick = (channelId: string) => {
     if (onConnect) onConnect(channelId);
-  
-  };
-
-  const handleInfoClick = (channelId: string) => {
-    console.log(`More details for ${channelId}`);
-  };
-
-  const handleRequestClick = () => {
-    if (onRequestChannel) {
-      onRequestChannel();
-    } else {
-      console.log('Request a channel');
-    }
   };
 
   return (
@@ -53,14 +38,12 @@ export function ConnectChannelDialog({
         aria-labelledby="connect-dialog-title"
         aria-describedby="connect-dialog-desc"
       >
-        <DialogHeader title={title} description={description} onClose={onClose} />
-        <DialogBody
-          channels={channels}
-          onChannelClick={handleChannelClick}
-          onInfoClick={handleInfoClick}
-          onRequestClick={handleRequestClick}
-          showRequestChannel={showRequestChannel}
+        <DialogHeader
+          title={title}
+          description={description}
+          onClose={onClose}
         />
+        <DialogBody channels={channels} onChannelClick={handleChannelClick} />
       </div>
     </div>
   );

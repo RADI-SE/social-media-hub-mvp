@@ -74,7 +74,7 @@ export default function SidebarFooter() {
         </div>
       </div>
       <p className="mt-3 text-center text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
-        Functional MVP · Demo data
+        Functional MVP · Connected workspace
       </p>
     </footer>
   );

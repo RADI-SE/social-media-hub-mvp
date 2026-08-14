@@ -24,7 +24,7 @@ const steps = [
     icon: BarChart3,
     number: "03",
     title: "Understand",
-    text: "Review clearly labeled demo analytics.",
+    text: "Review clearly labeled mock analytics.",
   },
   {
     icon: MessageCircleMore,

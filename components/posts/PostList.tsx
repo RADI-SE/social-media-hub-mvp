@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/hub/PageHeader";
+import type { Doc } from "@/convex/_generated/dataModel";
 import PostCard from "./PostCard";
- 
-export default function PostList({ posts }: { posts: any[] }) {
+
+export default function PostList({ posts }: { posts: Doc<"posts">[] }) {
   return (
     <>
       <PageHeader
@@ -12,7 +13,7 @@ export default function PostList({ posts }: { posts: any[] }) {
         description="Draft, scheduled, and published content in one schema-aligned view."
         action={
           <Link
-            href="/create"
+            href="/create/post"
             className="inline-flex items-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white"
           >
             <Plus size={16} />
@@ -31,7 +32,7 @@ export default function PostList({ posts }: { posts: any[] }) {
         <div className="divide-y divide-slate-100">
           {posts.length === 0 ? (
             <div className="px-6 py-12 text-center text-sm text-slate-400">
-              No posts or comments yet.
+              No posts yet.
             </div>
           ) : (
             posts.map((post) => <PostCard key={post._id} post={post} />)
