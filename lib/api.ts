@@ -1,9 +1,9 @@
-
-const SCRIPT_URL = process.env.NEXT_PUBLIC_SCRIPT_SERVER_URL || "http://localhost:3000";
+ 
+const SCRIPT_URL = "/api/proxy";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
  
 export async function publishPost(userId: string, content: string) {
-  const response = await fetch(`${SCRIPT_URL}/api/post`, {
+  const response = await fetch(`https://life-calamity-idiom.ngrok-free.dev/api/post`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -75,16 +75,22 @@ export async function cancelScheduledTask(taskId: string) {
   return response.json();
 }
 
-// --- Get session status ---
+// lib/api.ts
+
+
+// --- Get session status (with cache busting) ---
 export async function getSessionStatus(userId: string) {
-  const response = await fetch(`${SCRIPT_URL}/api/session-status?userId=${userId}`, {
+  // Add timestamp to force a fresh request
+  const url = `${SCRIPT_URL}/api/session-status?userId=${userId}&_=${Date.now()}`;
+  const response = await fetch(url, {
     headers: { "x-api-key": API_KEY },
+    cache: 'no-cache',
   });
   if (!response.ok) throw new Error("Failed to check session status");
   return response.json();
 }
 
-// --- Refresh session (connect) ---
+// --- Refresh session ---
 export async function refreshSession(userId: string) {
   const response = await fetch(`${SCRIPT_URL}/api/refresh-session`, {
     method: "POST",
@@ -93,10 +99,35 @@ export async function refreshSession(userId: string) {
       "x-api-key": API_KEY,
     },
     body: JSON.stringify({ userId }),
+    cache: 'no-cache',
   });
   if (!response.ok) throw new Error("Failed to refresh session");
   return response.json();
 }
+
+// --- Get session status ---
+// export async function getSessionStatus(userId: string) {
+//   console.log("userId", userId)
+//   const response = await fetch(`${SCRIPT_URL}/api/session-status?userId=${userId}`, {
+//     headers: { "x-api-key": API_KEY },
+//   });
+//   if (!response.ok) throw new Error("Failed to check session status");
+//   return response.json();
+// }
+
+// // --- Refresh session (connect) ---
+// export async function refreshSession(userId: string) {
+//   const response = await fetch(`${SCRIPT_URL}/api/refresh-session`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       "x-api-key": API_KEY,
+//     },
+//     body: JSON.stringify({ userId }),
+//   });
+//   if (!response.ok) throw new Error("Failed to refresh session");
+//   return response.json();
+// }
 
 // --- Disconnect session ---
 export async function disconnectSession(userId: string) {
