@@ -3,16 +3,16 @@
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import {TwitterIcon , FacebookIcon} from "../ui/ChannelIcons"
+import { TwitterIcon, FacebookIcon } from "../ui/ChannelIcons";
 import { format } from "date-fns";
 import { Trash2, RotateCcw, Calendar } from "lucide-react";
+import type { Doc } from "@/convex/_generated/dataModel";
 
 const platformIcons = {
   Facebook: FacebookIcon,
   Twitter: TwitterIcon,
-
 };
- 
+
 const platformMap = {
   Facebook: "Facebook",
   X: "Twitter",
@@ -25,7 +25,7 @@ const statusColors = {
   Failed: "bg-red-100 text-red-700",
 };
 
-export default function PostCard({ post }: { post: any }) {
+export default function PostCard({ post }: { post: Doc<"posts"> }) {
   const deletePost = useMutation(api.posts.deletePost);
   const retryPost = useMutation(api.posts.retryPost);
   const cancelScheduled = useMutation(api.posts.cancelScheduledItem);
@@ -57,25 +57,19 @@ export default function PostCard({ post }: { post: any }) {
     }
   };
 
-  const Icon = platformIcons[platformMap[post.platform] as keyof typeof platformIcons] || null;
+  const Icon =
+    platformIcons[platformMap[post.platform] as keyof typeof platformIcons] ||
+    null;
 
   return (
     <div className="grid grid-cols-1 gap-3 px-6 py-4 md:grid-cols-[0.75fr_2fr_0.7fr_1fr_auto] md:items-center">
       <div className="flex items-center gap-3">
         {Icon && <Icon className="h-5 w-5 text-slate-500" />}
-        <span className="text-sm font-medium">{post.platform || "Facebook"}</span>
+        <span className="text-sm font-medium">
+          {post.platform || "Facebook"}
+        </span>
         {post.type === "comment" && (
           <span className="text-xs text-slate-400">(comment)</span>
-        )}
-        {post.targetUrl && (
-          <a
-            href={post.targetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-500 hover:underline truncate max-w-[100px]"
-          >
-            link
-          </a>
         )}
       </div>
       <div className="truncate text-sm text-slate-700" title={post.content}>
@@ -103,6 +97,7 @@ export default function PostCard({ post }: { post: any }) {
       <div className="flex items-center gap-1">
         {post.status === "Scheduled" && (
           <button
+            type="button"
             onClick={handleCancel}
             className="rounded p-1.5 text-yellow-600 hover:bg-yellow-50"
             title="Cancel"
@@ -112,6 +107,7 @@ export default function PostCard({ post }: { post: any }) {
         )}
         {post.status === "Failed" && (
           <button
+            type="button"
             onClick={handleRetry}
             className="rounded p-1.5 text-blue-600 hover:bg-blue-50"
             title="Retry"
@@ -120,6 +116,7 @@ export default function PostCard({ post }: { post: any }) {
           </button>
         )}
         <button
+          type="button"
           onClick={handleDelete}
           className="rounded p-1.5 text-red-500 hover:bg-red-50"
           title="Delete"

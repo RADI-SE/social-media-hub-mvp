@@ -1,4 +1,4 @@
-import { ComponentType, SVGProps } from 'react';
+import { ComponentType, SVGProps } from "react";
 
 export interface Channel {
   id: string;
@@ -11,7 +11,5 @@ export interface ConnectChannelDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConnect?: (channelId: string) => void;
-  onRequestChannel?: () => void;
   channels?: Channel[];
-  showRequestChannel?: boolean;
 }

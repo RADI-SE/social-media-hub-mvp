@@ -1,47 +1,68 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { format } from "date-fns";
+import { useMutation, useQuery } from "convex/react";
+import { Loader2, MessageCircleMore, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Trash2, ExternalLink, Plus } from "lucide-react";
 import PageHeader from "@/components/hub/PageHeader";
+import { api } from "@/convex/_generated/api";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
+import CommentItem from "./CommentItem";
 
-const statusColors: Record<string, string> = {
-  Scheduled: "bg-blue-100 text-blue-800",
-  Published: "bg-green-100 text-green-800",
-  Failed: "bg-red-100 text-red-800",
-};
-
-type Comment = {
-  _id: string;
-  postId?: string;
-  targetUrl?: string;
-  authorName: string;
-  content: string;
-  status: string; // "Scheduled" | "Published" | "Failed"
-  createdAt: number;
-};
-
-export default function CommentList({ comments }: { comments: Comment[] }) {
+export default function CommentList({
+  comments,
+}: {
+  comments: Doc<"comments">[];
+}) {
+  const user = useQuery(api.users.current);
+  const tasks = useQuery(
+    api.followUpTasks.getTasksForUser,
+    user ? { userId: user._id } : "skip",
+  );
+  const createTask = useMutation(api.followUpTasks.createFollowUpTask);
   const deleteComment = useMutation(api.comments.deleteComment);
+  const [pendingId, setPendingId] = useState<Id<"comments"> | null>(null);
 
-  const handleDelete = async (commentId: string) => {
+  async function handleConvert(comment: Doc<"comments">) {
+    if (!user) {
+      toast.error("Your account is still loading. Try again.");
+      return;
+    }
+    setPendingId(comment._id);
+    try {
+      await createTask({
+        commentId: comment._id,
+        userId: user._id,
+        title: `Follow up with ${comment.authorName}`,
+      });
+      toast.success("Follow-up task created");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not create task",
+      );
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function handleDelete(commentId: Id<"comments">) {
     try {
       await deleteComment({ commentId });
       toast.success("Comment deleted");
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error(
+        error instanceof Error ? error.message : "Could not delete comment",
+      );
     }
-  };
+  }
 
   return (
     <>
       <PageHeader
         eyebrow="Engagement"
         title="Comments"
-        description="View and manage comments from your published posts."
+        description="Review stored comments, classifications, and turn a customer signal into follow-up work."
         action={
           <Link
             href="/comments/post"
@@ -52,68 +73,35 @@ export default function CommentList({ comments }: { comments: Comment[] }) {
           </Link>
         }
       />
-      <section className="glass-card overflow-hidden rounded-3xl">
-        <div className="hidden grid-cols-[1fr_2fr_0.7fr_1fr_auto] gap-5 border-b border-slate-100 px-6 py-4 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-slate-400 md:grid">
-          <span>Author</span>
-          <span>Content</span>
-          <span>Status</span>
-          <span>Created at</span>
-          <span>Actions</span>
+      {user === undefined || (user && tasks === undefined) ? (
+        <div className="glass-card flex min-h-64 items-center justify-center rounded-3xl text-sm text-slate-500">
+          <Loader2 size={18} className="mr-2 animate-spin" />
+          Loading comments…
         </div>
-        <div className="divide-y divide-slate-100">
-          {comments.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-slate-400">
-              No comments found.
-            </div>
-          ) : (
-            comments.map((comment) => (
-              <div
-                key={comment._id}
-                className="grid grid-cols-1 gap-3 px-6 py-4 md:grid-cols-[1fr_2fr_0.7fr_1fr_auto] md:items-center"
-              >
-                <div className="font-medium text-sm text-gray-900">
-                  {comment.authorName}
-                </div>
-                <div className="truncate text-sm text-gray-700" title={comment.content}>
-                  {comment.content}
-                </div>
-                <div>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      statusColors[comment.status] || "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {comment.status}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500">
-                  {format(comment.createdAt, "MMM d, yyyy h:mm a")}
-                </div>
-                <div className="flex items-center gap-1">
-                  {comment.targetUrl && (
-                    <a
-                      href={comment.targetUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded p-1.5 text-blue-600 hover:bg-blue-50"
-                      title="View post"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  )}
-                  <button
-                    onClick={() => handleDelete(comment._id)}
-                    className="rounded p-1.5 text-red-500 hover:bg-red-50"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+      ) : !comments.length ? (
+        <div className="glass-card flex min-h-64 flex-col items-center justify-center rounded-3xl px-6 text-center">
+          <MessageCircleMore className="text-[#3556d9]" />
+          <h2 className="mt-4 font-semibold text-[#071e55]">No comments yet</h2>
+          <p className="mt-2 max-w-md text-sm text-slate-500">
+            Stored comments will appear here after they are posted or imported.
+          </p>
         </div>
-      </section>
+      ) : (
+        <section className="space-y-4">
+          {comments.map((comment) => (
+            <CommentItem
+              key={comment._id}
+              comment={comment}
+              converted={Boolean(
+                tasks?.some((task) => task.commentId === comment._id),
+              )}
+              converting={pendingId === comment._id}
+              onConvert={() => handleConvert(comment)}
+              onDelete={() => handleDelete(comment._id)}
+            />
+          ))}
+        </section>
+      )}
     </>
   );
 }

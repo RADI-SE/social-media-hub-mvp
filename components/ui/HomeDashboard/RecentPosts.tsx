@@ -1,8 +1,14 @@
 import Link from "next/link";
 import StatusPill from "@/components/hub/StatusPill";
-import { accountFor, posts } from "@/components/hub/data";
+import type { Doc } from "@/convex/_generated/dataModel";
 
-export function RecentPosts() {
+export function RecentPosts({
+  posts,
+  accounts,
+}: {
+  posts: Doc<"posts">[];
+  accounts: Doc<"socialAccounts">[];
+}) {
   return (
     <article className="glass-card overflow-hidden rounded-3xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
@@ -22,24 +28,39 @@ export function RecentPosts() {
         </Link>
       </div>
       <div className="divide-y divide-slate-100">
-        {posts.map((post) => (
-          <div
-            key={post.id}
-            className="grid gap-3 px-6 py-5 sm:grid-cols-[1fr_auto] sm:items-center"
-          >
-            <div className="min-w-0">
-              <div className="mb-2 flex items-center gap-2 text-xs text-slate-400">
-                <span>{accountFor(post)?.platform}</span>
-                <span>·</span>
-                <span>{accountFor(post)?.accountName}</span>
+        {!posts.length ? (
+          <p className="px-6 py-10 text-center text-sm text-slate-400">
+            No posts yet.
+          </p>
+        ) : (
+          posts.map((post) => {
+            const account = accounts.find(
+              (item) => item._id === post.socialAccountId,
+            );
+            return (
+              <div
+                key={post._id}
+                className="grid gap-3 px-6 py-5 sm:grid-cols-[1fr_auto] sm:items-center"
+              >
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center gap-2 text-xs text-slate-400">
+                    <span>{post.platform}</span>
+                    {account && (
+                      <>
+                        <span>·</span>
+                        <span>{account.accountName}</span>
+                      </>
+                    )}
+                  </div>
+                  <p className="truncate text-sm font-medium text-slate-700">
+                    {post.content}
+                  </p>
+                </div>
+                <StatusPill value={post.status} />
               </div>
-              <p className="truncate text-sm font-medium text-slate-700">
-                {post.content}
-              </p>
-            </div>
-            <StatusPill value={post.status} />
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </article>
   );

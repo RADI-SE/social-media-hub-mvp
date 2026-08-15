@@ -1,10 +1,10 @@
 import StatusPill from "@/components/hub/StatusPill";
-import type { CommentClassification as Classification } from "@/components/hub/data";
+import type { Doc } from "@/convex/_generated/dataModel";
 
 export default function CommentClassification({
   value,
 }: {
-  value: Classification;
+  value: Doc<"comments">["classification"];
 }) {
   return <StatusPill value={value} />;
 }

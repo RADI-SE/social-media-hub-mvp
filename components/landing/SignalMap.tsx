@@ -26,7 +26,7 @@ const nodes = [
     icon: BarChart3,
     eyebrow: "ANALYTICS",
     label: "14 leads",
-    detail: "Demo performance",
+    detail: "Mock performance",
   },
   {
     className: "signal-node signal-node-task",
