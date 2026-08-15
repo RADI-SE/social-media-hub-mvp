@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs"; // ✅ import useAuth
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -13,6 +13,7 @@ import { type Platform } from "@/types/social-account";
 export default function CreatePage() {
   const router = useRouter();
   const { user } = useUser();
+  const { getToken } = useAuth(); 
   const userId = user?.id;
 
   const [isPosting, setIsPosting] = useState(false);
@@ -32,8 +33,9 @@ export default function CreatePage() {
     const loadingToast = toast.loading("Publishing...");
 
     try {
-      // 1. Execute via Script Server
-      const result = await publishPost(userId, content);
+     const token = (await getToken()) ?? undefined;
+ 
+      const result = await publishPost(userId, content, token);
       if (!result.success) {
         toast.dismiss(loadingToast);
         toast.error(result.error || "Execution failed");

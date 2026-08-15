@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConnectChannelDialog } from "@/components/ui/ConnectChannelDialog";
-import { FacebookIcon } from "@/components/ui/ChannelIcons";
-import { useUser } from "@clerk/nextjs";
+import { TwitterIcon, FacebookIcon } from "@/components/ui/ChannelIcons";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { getSessionStatus, refreshSession, disconnectSession } from "@/lib/api";
 
@@ -17,11 +17,11 @@ type ChannelStatus = {
 
 export default function SocialAccountsPage() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const userId = user?.id;
 
   const [isConnectDialogOpen, setIsConnectDialogOpen] = useState(false);
 
-  // Convex mutations (stay in component)
   const connectAccount = useMutation(api.socialAccounts.connectAccount);
   const disconnectAccount = useMutation(api.socialAccounts.disconnectAccount);
 
@@ -32,8 +32,7 @@ export default function SocialAccountsPage() {
     twitter: { connected: false, loading: false },
   });
 
-  // Check status on mount and after connect/disconnect
-  const checkStatus = useCallback(async () => {
+  const checkStatus = async () => {
     if (!userId) {
       setChannelStatuses((prev) => ({
         ...prev,
@@ -43,7 +42,8 @@ export default function SocialAccountsPage() {
     }
 
     try {
-      const data = await getSessionStatus(userId);
+      const token = (await getToken({ force: true })) ?? undefined;
+      const data = await getSessionStatus(userId, token);
       setChannelStatuses((prev) => ({
         ...prev,
         facebook: { connected: data.connected, loading: false },
@@ -86,12 +86,11 @@ export default function SocialAccountsPage() {
     const loadingToast = toast.loading("Connecting to Facebook...");
 
     try {
-      await refreshSession(userId);
-      // Re-check status
-      const statusData = await getSessionStatus(userId);
+      const token = (await getToken({ force: true })) ?? undefined;
+      await refreshSession(userId, token);
+      const statusData = await getSessionStatus(userId, token);
 
       if (statusData.connected) {
-        // Save to Team Server DB via Convex
         try {
           await connectAccount({
             userId,
@@ -101,7 +100,6 @@ export default function SocialAccountsPage() {
           });
         } catch (err) {
           console.error("❌ Failed to update Team DB:", err);
-          // Don't block the UI – the session is already stored
         }
 
         setChannelStatuses((prev) => ({
@@ -143,9 +141,9 @@ export default function SocialAccountsPage() {
     const loadingToast = toast.loading("Disconnecting...");
 
     try {
-      await disconnectSession(userId);
+      const token = (await getToken({ force: true })) ?? undefined;
+      await disconnectSession(userId, token);
 
-      // Remove from Team Server DB via Convex
       await disconnectAccount({
         userId,
         platform: "Facebook",
@@ -177,7 +175,6 @@ export default function SocialAccountsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-      {/* Header – unchanged */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -208,7 +205,6 @@ export default function SocialAccountsPage() {
         </button>
       </div>
 
-      {/* Connected accounts – unchanged */}
       {Object.values(channelStatuses).some((status) => status.connected) ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {channelStatuses.facebook.connected && (

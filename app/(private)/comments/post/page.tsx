@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs"; // ✅ import useAuth
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -13,6 +13,7 @@ import { type Platform } from "@/types/social-account";
 export default function CommentPage() {
   const router = useRouter();
   const { user } = useUser();
+  const { getToken } = useAuth(); // ✅ get token function
   const userId = user?.id;
   const userName = user?.fullName || user?.username || "You";
 
@@ -31,9 +32,11 @@ export default function CommentPage() {
     setIsPosting(true);
     const loadingToast = toast.loading("Posting comment...");
 
-    try { 
-      await publishComment(userId, targetUrl, content);
- 
+    try {
+       const token = (await getToken()) ?? undefined;
+
+       await publishComment(userId, targetUrl, content, token);
+
       await createComment({
         userId,
         targetUrl,
@@ -62,7 +65,7 @@ export default function CommentPage() {
     setIsScheduling(true);
     const loadingToast = toast.loading("Scheduling comment...");
 
-    try {  
+    try {
       await scheduleComment({
         userId,
         targetUrl,
