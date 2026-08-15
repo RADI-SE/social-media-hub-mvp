@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConnectChannelDialog } from "@/components/ui/ConnectChannelDialog";
 import { TwitterIcon, FacebookIcon } from "@/components/ui/ChannelIcons";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { getSessionStatus, refreshSession, disconnectSession } from "@/lib/api";
+import {
+  getSessionStatus,
+  refreshSession,
+  disconnectSession,
+} from "@/lib/api";
 
 type ChannelStatus = {
   connected: boolean;
@@ -25,9 +29,7 @@ export default function SocialAccountsPage() {
   const connectAccount = useMutation(api.socialAccounts.connectAccount);
   const disconnectAccount = useMutation(api.socialAccounts.disconnectAccount);
 
-  const [channelStatuses, setChannelStatuses] = useState<
-    Record<string, ChannelStatus>
-  >({
+  const [channelStatuses, setChannelStatuses] = useState<Record<string, ChannelStatus>>({
     facebook: { connected: false, loading: true },
     twitter: { connected: false, loading: false },
   });
@@ -60,15 +62,16 @@ export default function SocialAccountsPage() {
       }));
       toast.error("Failed to check connection status");
     }
-  }, [userId]);
+  };
 
   useEffect(() => {
     checkStatus();
-  }, [checkStatus]);
+  }, [userId]);
 
   const handleConnect = async (channelId: string) => {
     if (channelId !== "facebook") {
-      toast.error("This channel is not supported by the automation server.");
+      console.log(`Connecting to ${channelId}...`);
+      setIsConnectDialogOpen(false);
       return;
     }
 
@@ -88,12 +91,14 @@ export default function SocialAccountsPage() {
     try {
       const token = (await getToken({ force: true })) ?? undefined;
       await refreshSession(userId, token);
-      const statusData = await getSessionStatus(userId, token);
+
+      const freshToken = (await getToken({ force: true })) ?? undefined;
+      const statusData = await getSessionStatus(userId, freshToken);
 
       if (statusData.connected) {
         try {
           await connectAccount({
-            userId,
+            userId: userId as any,
             platform: "Facebook",
             accountName: "Facebook Account",
             accountHandle: userId,
@@ -145,7 +150,7 @@ export default function SocialAccountsPage() {
       await disconnectSession(userId, token);
 
       await disconnectAccount({
-        userId,
+        userId: userId as any,
         platform: "Facebook",
       });
 
@@ -173,6 +178,11 @@ export default function SocialAccountsPage() {
 
   const facebookStatus = channelStatuses.facebook;
 
+  // ✅ Build list of connected channel IDs
+  const connectedChannels = Object.entries(channelStatuses)
+    .filter(([_, status]) => status.connected)
+    .map(([id]) => id);
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -188,18 +198,8 @@ export default function SocialAccountsPage() {
           onClick={() => setIsConnectDialogOpen(true)}
           className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Connect a Channel
         </button>
@@ -257,18 +257,8 @@ export default function SocialAccountsPage() {
           <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-64 -translate-x-1/2 rounded-full bg-blue-500/5 blur-3xl" />
           <div className="relative mx-auto flex max-w-sm flex-col items-center">
             <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-700/60 dark:ring-gray-600">
-              <svg
-                className="h-6 w-6 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M21 21l-4.35-4.35m2.1-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
-                />
+              <svg className="h-6 w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35m2.1-5.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
               </svg>
             </div>
             <h3 className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
@@ -282,18 +272,8 @@ export default function SocialAccountsPage() {
               onClick={() => setIsConnectDialogOpen(true)}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Connect a Channel
             </button>
@@ -305,7 +285,12 @@ export default function SocialAccountsPage() {
         isOpen={isConnectDialogOpen}
         onClose={() => setIsConnectDialogOpen(false)}
         onConnect={handleConnect}
-        channels={[{ id: "facebook", name: "Facebook", icon: FacebookIcon }]}
+        channels={[
+          { id: "facebook", name: "Facebook", icon: FacebookIcon },
+          { id: "twitter", name: "X (Twitter)", icon: TwitterIcon },
+        ]}
+        connectedChannels={connectedChannels} // ✅ pass connected channels
+        showRequestChannel={false}
         title="Add a social account"
         description="Choose a platform to connect."
       />
