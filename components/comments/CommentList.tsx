@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { Loader2, MessageCircleMore, Plus } from "lucide-react";
@@ -8,7 +8,10 @@ import { toast } from "sonner";
 import PageHeader from "@/components/hub/PageHeader";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import CommentItem from "./CommentItem";
+import CommentTable from "./CommentTable";
+
+type Comment = Doc<"comments">;
+const EMPTY_TASKS: Doc<"followUpTasks">[] = [];
 
 export default function CommentList({
   comments,
@@ -24,38 +27,44 @@ export default function CommentList({
   const deleteComment = useMutation(api.comments.deleteComment);
   const [pendingId, setPendingId] = useState<Id<"comments"> | null>(null);
 
-  async function handleConvert(comment: Doc<"comments">) {
-    if (!user) {
-      toast.error("Your account is still loading. Try again.");
-      return;
-    }
-    setPendingId(comment._id);
-    try {
-      await createTask({
-        commentId: comment._id,
-        userId: user._id,
-        title: `Follow up with ${comment.authorName}`,
-      });
-      toast.success("Follow-up task created");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not create task",
-      );
-    } finally {
-      setPendingId(null);
-    }
-  }
+  const handleConvert = useCallback(
+    async (comment: Comment) => {
+      if (!user) {
+        toast.error("Your account is still loading. Try again.");
+        return;
+      }
+      setPendingId(comment._id);
+      try {
+        await createTask({
+          commentId: comment._id,
+          userId: user._id,
+          title: `Follow up with ${comment.authorName}`,
+        });
+        toast.success("Follow-up task created");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Could not create task",
+        );
+      } finally {
+        setPendingId(null);
+      }
+    },
+    [createTask, user],
+  );
 
-  async function handleDelete(commentId: Id<"comments">) {
-    try {
-      await deleteComment({ commentId });
-      toast.success("Comment deleted");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not delete comment",
-      );
-    }
-  }
+  const handleDelete = useCallback(
+    async (commentId: Id<"comments">) => {
+      try {
+        await deleteComment({ commentId });
+        toast.success("Comment deleted");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Could not delete comment",
+        );
+      }
+    },
+    [deleteComment],
+  );
 
   return (
     <>
@@ -87,19 +96,14 @@ export default function CommentList({
           </p>
         </div>
       ) : (
-        <section className="space-y-4">
-          {comments.map((comment) => (
-            <CommentItem
-              key={comment._id}
-              comment={comment}
-              converted={Boolean(
-                tasks?.some((task) => task.commentId === comment._id),
-              )}
-              converting={pendingId === comment._id}
-              onConvert={() => handleConvert(comment)}
-              onDelete={() => handleDelete(comment._id)}
-            />
-          ))}
+        <section className="glass-card overflow-hidden rounded-3xl">
+          <CommentTable
+            comments={comments}
+            tasks={tasks ?? EMPTY_TASKS}
+            pendingId={pendingId}
+            onConvert={handleConvert}
+            onDelete={handleDelete}
+          />
         </section>
       )}
     </>

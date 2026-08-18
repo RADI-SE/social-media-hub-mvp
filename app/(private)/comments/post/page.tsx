@@ -1,103 +1,82 @@
 "use client";
 
-import { useState } from "react";
-import { useUser, useAuth } from "@clerk/nextjs"; // ✅ import useAuth
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { toast } from "sonner";
 import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
+import { useComposerWorkflow } from "@/hooks/useComposerWorkflow";
 import { publishComment } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
 
 export default function CommentPage() {
-  const router = useRouter();
-  const { user } = useUser();
-  const { getToken } = useAuth(); // ✅ get token function
-  const userId = user?.id;
-  const userName = user?.fullName || user?.username || "You";
-
-  const [isPosting, setIsPosting] = useState(false);
-  const [isScheduling, setIsScheduling] = useState(false);
-
+  const workflow = useComposerWorkflow();
   const createComment = useMutation(api.comments.createComment);
   const scheduleComment = useMutation(api.comments.scheduleComment);
+  const authorName =
+    workflow.user?.fullName || workflow.user?.username || "You";
 
-  const handlePost = async (content: string, _platform: Platform, targetUrl?: string) => {
-    if (!userId || !targetUrl) {
-      toast.error("Missing user or post URL.");
-      return;
-    }
-
-    setIsPosting(true);
-    const loadingToast = toast.loading("Posting comment...");
-
-    try {
-       const token = (await getToken()) ?? undefined;
-
-       await publishComment(userId, targetUrl, content, token);
-
-      await createComment({
-        userId,
-        targetUrl,
-        authorName: userName,
-        content,
-        classification: "Engagement",
-      });
-
-      toast.dismiss(loadingToast);
-      toast.success("Comment posted!");
-      router.push("/home");
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error((error as Error).message);
-    } finally {
-      setIsPosting(false);
-    }
+  const validate = (targetUrl?: string) => {
+    if (!targetUrl) return "A Facebook post URL is required.";
   };
 
-  const handleSchedule = async (content: string, scheduledAt: number, _platform: Platform, targetUrl?: string) => {
-    if (!userId || !targetUrl) {
-      toast.error("Missing user or post URL.");
-      return;
-    }
+  const handlePost = async (
+    content: string,
+    _platform: Platform,
+    targetUrl?: string,
+  ) => {
+    const userId = workflow.requireUser(validate(targetUrl));
+    if (!userId || !targetUrl) return;
 
-    setIsScheduling(true);
-    const loadingToast = toast.loading("Scheduling comment...");
-
-    try {
-      await scheduleComment({
-        userId,
-        targetUrl,
-        authorName: userName,
-        content,
-        scheduledAt,
-        classification: "Engagement",
-      });
-      toast.dismiss(loadingToast);
-      toast.success("Comment scheduled!");
-      router.push("/home");
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error((error as Error).message);
-    } finally {
-      setIsScheduling(false);
-    }
+    await workflow.run(
+      "post",
+      { loading: "Posting comment...", success: "Comment posted!" },
+      async () => {
+        const token = (await workflow.getToken()) ?? undefined;
+        await publishComment(userId, targetUrl, content, token);
+        await createComment({
+          userId,
+          targetUrl,
+          authorName,
+          content,
+          classification: "Engagement",
+        });
+      },
+    );
   };
 
-  const handleClose = () => {
-    router.push("/home");
+  const handleSchedule = async (
+    content: string,
+    scheduledAt: number,
+    _platform: Platform,
+    targetUrl?: string,
+  ) => {
+    const userId = workflow.requireUser(validate(targetUrl));
+    if (!userId || !targetUrl) return;
+
+    await workflow.run(
+      "schedule",
+      { loading: "Scheduling comment...", success: "Comment scheduled!" },
+      async () => {
+        await scheduleComment({
+          userId,
+          targetUrl,
+          authorName,
+          content,
+          scheduledAt,
+          classification: "Engagement",
+        });
+      },
+    );
   };
 
   return (
     <PostComposer
-      isOpen={true}
+      isOpen
       mode="comment"
-      onClose={handleClose}
+      onClose={workflow.close}
       onPost={handlePost}
       onSchedule={handleSchedule}
-      isPosting={isPosting}
-      isScheduling={isScheduling}
+      isPosting={workflow.isPosting}
+      isScheduling={workflow.isScheduling}
     />
   );
 }

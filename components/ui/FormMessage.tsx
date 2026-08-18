@@ -6,8 +6,14 @@ type FormMessageProps = {
   className?: string;
 };
 
-export function FormMessage({ type, message, className = "" }: FormMessageProps) {
+export function FormMessage({
+  type,
+  message,
+  className = "",
+}: FormMessageProps) {
   if (!message) return null;
+
+  const messageType = type ?? "info";
 
   const styles = {
     success: "text-emerald-700",
@@ -22,8 +28,10 @@ export function FormMessage({ type, message, className = "" }: FormMessageProps)
   };
 
   return (
-    <p className={`mt-2 flex items-center gap-1.5 text-xs ${styles[type]} ${className}`}>
-      {icons[type]}
+    <p
+      className={`mt-2 flex items-center gap-1.5 text-xs ${styles[messageType]} ${className}`}
+    >
+      {icons[messageType]}
       {message}
     </p>
   );

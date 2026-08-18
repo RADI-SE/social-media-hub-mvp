@@ -18,7 +18,7 @@ export function PostComposerHeader({
   onClose,
 }: HeaderProps) {
   return (
-    <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+    <header className="flex flex-none items-center justify-between border-b border-gray-200 px-6 py-4">
       <div>
         <h3 className="text-lg font-semibold text-gray-900">Create Post</h3>
         <p className="text-sm text-gray-500">Create and edit posts</p>

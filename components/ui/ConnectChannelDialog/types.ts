@@ -12,4 +12,7 @@ export interface ConnectChannelDialogProps {
   onClose: () => void;
   onConnect?: (channelId: string) => void;
   channels?: Channel[];
+  connectedChannels?: string[];
+  title?: string;
+  description?: string;
 }

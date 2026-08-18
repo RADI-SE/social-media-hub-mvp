@@ -1,5 +1,5 @@
-import { Check, Loader2, TriangleAlert } from "lucide-react";
-import { FormMessage } from "@/components/ui/FormMessage"; // adjust import path
+import { Loader2, TriangleAlert } from "lucide-react";
+import { FormMessage } from "@/components/ui/FormMessage";
 
 type ProfileFieldProps = {
   label: string;
@@ -33,7 +33,6 @@ export function ProfileField({
   const inputId = `profile-${label.toLowerCase().replace(/\s+/g, "-")}`;
   const messageId = `${inputId}-message`;
 
-  // Determine message type and content
   const messageType = error ? "error" : success ? "success" : "info";
   const messageContent = error || success || helper;
 
