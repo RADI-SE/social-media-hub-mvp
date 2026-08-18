@@ -1,10 +1,79 @@
-import Link from "next/link";
-import { Plus } from "lucide-react";
-import PageHeader from "@/components/hub/PageHeader";
-import type { Doc } from "@/convex/_generated/dataModel";
-import PostCard from "./PostCard";
+"use client";
 
-export default function PostList({ posts }: { posts: Doc<"posts">[] }) {
+import Link from "next/link";
+import { format } from "date-fns";
+import { Plus } from "lucide-react";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { Doc } from "@/convex/_generated/dataModel";
+import PageHeader from "@/components/hub/PageHeader";
+import StatusPill from "@/components/hub/StatusPill";
+import DataTable, { dataTableFeatures } from "@/components/ui/DataTable";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TwitterIcon,
+} from "@/components/ui/ChannelIcons";
+import PostActions from "./PostActions";
+
+type Post = Doc<"posts">;
+
+const platformIcons = {
+  Facebook: FacebookIcon,
+  Instagram: InstagramIcon,
+  X: TwitterIcon,
+};
+
+const column = createColumnHelper<typeof dataTableFeatures, Post>();
+
+const columns = column.columns([
+  column.accessor("platform", {
+    header: "Platform",
+    cell: ({ row }) => {
+      const Icon =
+        platformIcons[row.original.platform as keyof typeof platformIcons];
+      return (
+        <span className="flex items-center gap-2 text-sm font-semibold text-[#071e55]">
+          {Icon && <Icon className="h-4 w-4 text-slate-500" />}
+          {row.original.platform}
+        </span>
+      );
+    },
+  }),
+  column.accessor("content", {
+    header: "Content",
+    cell: ({ getValue }) => (
+      <p
+        className="max-w-md truncate text-sm text-slate-600"
+        title={getValue()}
+      >
+        {getValue()}
+      </p>
+    ),
+  }),
+  column.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => <StatusPill value={getValue()} />,
+  }),
+  column.accessor(
+    (post) => post.scheduledAt ?? post.publishedAt ?? post.createdAt,
+    {
+      id: "date",
+      header: "Date",
+      cell: ({ getValue }) => (
+        <span className="whitespace-nowrap text-sm text-slate-500">
+          {format(getValue(), "MMM d, yyyy · h:mm a")}
+        </span>
+      ),
+    },
+  ),
+  column.display({
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => <PostActions post={row.original} />,
+  }),
+]);
+
+export default function PostList({ posts }: { posts: Post[] }) {
   return (
     <>
       <PageHeader
@@ -22,22 +91,13 @@ export default function PostList({ posts }: { posts: Doc<"posts">[] }) {
         }
       />
       <section className="glass-card overflow-hidden rounded-3xl">
-        <div className="hidden grid-cols-[0.75fr_2fr_0.7fr_1fr_auto] gap-5 border-b border-slate-100 px-6 py-4 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-slate-400 md:grid">
-          <span>Platform</span>
-          <span>Content</span>
-          <span>Status</span>
-          <span>Scheduled at</span>
-          <span>Post</span>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {posts.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-slate-400">
-              No posts yet.
-            </div>
-          ) : (
-            posts.map((post) => <PostCard key={post._id} post={post} />)
-          )}
-        </div>
+        <DataTable
+          columns={columns}
+          data={posts}
+          emptyMessage="No posts yet."
+          initialSorting={[{ id: "date", desc: true }]}
+          getRowId={(post) => post._id}
+        />
       </section>
     </>
   );

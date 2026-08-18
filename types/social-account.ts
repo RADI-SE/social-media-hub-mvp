@@ -4,6 +4,7 @@ export interface SocialAccount {
   userId: string;
   platform: string;
   accountName: string;
+  status?: "Connected" | "Disconnected";
 }
 
 export type Platform = "Instagram" | "Facebook" | "LinkedIn" | "TikTok" | "X";

@@ -33,13 +33,13 @@ export function ImageAttachment({
       />
 
       {file && previewUrl ? (
-        <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+        <div className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 sm:h-44">
           {/* A local object URL is required here so the selected file can be previewed before upload. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Selected post attachment"
-            className="max-h-72 w-full object-cover"
+            className="h-full w-full object-contain"
           />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 text-white">
             <span className="truncate text-xs font-medium">{file.name}</span>

@@ -1,87 +1,52 @@
 "use client";
 
-import { useState } from "react";
-import { useUser, useAuth } from "@clerk/nextjs"; // ✅ import useAuth
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { toast } from "sonner";
 import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
+import { useComposerWorkflow } from "@/hooks/useComposerWorkflow";
 import { publishPost } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
 
-function getUnsupportedPublishingMessage(platform: Platform, image?: File) {
-  if (platform === "Instagram") {
-    return "Instagram is ready in the composer, but publishing is not connected to the server yet.";
-  }
-  if (image) {
-    return "Image attachments are ready in the composer, but the publishing server still needs an image upload endpoint.";
-  }
-  return null;
-}
-
 export default function CreatePage() {
-  const router = useRouter();
-  const { user } = useUser();
-  const { getToken } = useAuth();
-  const userId = user?.id;
-
-  const [isPosting, setIsPosting] = useState(false);
-  const [isScheduling, setIsScheduling] = useState(false);
-
+  const workflow = useComposerWorkflow();
   const schedulePost = useMutation(api.posts.schedulePost);
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
 
-  // --- Immediate post ---
+  const validate = (platform: Platform, image?: File) => {
+    if (platform === "Instagram") {
+      return "Instagram publishing is not connected to the server yet.";
+    }
+    if (image) {
+      return "The publishing server still needs an image upload endpoint.";
+    }
+  };
+
   const handlePost = async (
     content: string,
     platform: Platform,
     _targetUrl?: string,
     image?: File,
   ) => {
-    if (!userId) {
-      toast.error("You must be logged in.");
-      return;
-    }
+    const userId = workflow.requireUser(validate(platform, image));
+    if (!userId) return;
 
-    const unsupportedMessage = getUnsupportedPublishingMessage(platform, image);
-    if (unsupportedMessage) {
-      toast.error(unsupportedMessage);
-      return;
-    }
-
-    setIsPosting(true);
-    const loadingToast = toast.loading("Publishing...");
-
-    try {
-      const token = (await getToken()) ?? undefined;
-
-      const result = await publishPost(userId, content, token);
-      if (!result.success) {
-        toast.dismiss(loadingToast);
-        toast.error(result.error || "Execution failed");
-        return;
-      }
-
-      // 2. Save to Team DB
-      await recordPublishedPost({
-        userId,
-        platform,
-        content,
-      });
-
-      toast.dismiss(loadingToast);
-      toast.success("Post published!");
-      router.push("/home");
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error((error as Error).message);
-    } finally {
-      setIsPosting(false);
-    }
+    await workflow.run(
+      "post",
+      { loading: "Publishing...", success: "Post published!" },
+      async () => {
+        const token = (await workflow.getToken()) ?? undefined;
+        const result = await publishPost(userId, content, token);
+        if (!result.success)
+          throw new Error(result.error || "Execution failed");
+        await recordPublishedPost({
+          userId,
+          platform,
+          content,
+        });
+      },
+    );
   };
 
-  // --- Scheduled post ---
   const handleSchedule = async (
     content: string,
     scheduledAt: number,
@@ -89,50 +54,31 @@ export default function CreatePage() {
     _targetUrl?: string,
     image?: File,
   ) => {
-    if (!userId) {
-      toast.error("You must be logged in.");
-      return;
-    }
+    const userId = workflow.requireUser(validate(platform, image));
+    if (!userId) return;
 
-    const unsupportedMessage = getUnsupportedPublishingMessage(platform, image);
-    if (unsupportedMessage) {
-      toast.error(unsupportedMessage);
-      return;
-    }
-
-    setIsScheduling(true);
-    const loadingToast = toast.loading("Scheduling...");
-
-    try {
-      await schedulePost({
-        userId,
-        platform,
-        content,
-        scheduledAt,
-      });
-      toast.dismiss(loadingToast);
-      toast.success("Post scheduled!");
-      router.push("/home");
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error((error as Error).message);
-    } finally {
-      setIsScheduling(false);
-    }
-  };
-
-  const handleClose = () => {
-    router.push("/home");
+    await workflow.run(
+      "schedule",
+      { loading: "Scheduling...", success: "Post scheduled!" },
+      async () => {
+        await schedulePost({
+          userId,
+          platform,
+          content,
+          scheduledAt,
+        });
+      },
+    );
   };
 
   return (
     <PostComposer
-      isOpen={true}
-      onClose={handleClose}
+      isOpen
+      onClose={workflow.close}
       onPost={handlePost}
       onSchedule={handleSchedule}
-      isPosting={isPosting}
-      isScheduling={isScheduling}
+      isPosting={workflow.isPosting}
+      isScheduling={workflow.isScheduling}
     />
   );
 }

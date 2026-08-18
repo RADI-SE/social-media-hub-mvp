@@ -11,10 +11,10 @@ export function ConnectChannelDialog({
   onClose,
   onConnect,
   channels = defaultChannels,
-  connectedChannels = [], // ✅ new prop
+  connectedChannels = [],
   title = "Connect a channel",
   description = "Connect a social media channel to Spiders AI · Social Media Marketing Hub MVP.",
-}: ConnectChannelDialogProps & { connectedChannels?: string[] }) {
+}: ConnectChannelDialogProps) {
   const backdropRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
@@ -47,7 +47,7 @@ export function ConnectChannelDialog({
         <DialogBody
           channels={channels}
           onChannelClick={handleChannelClick}
-          connectedChannels={connectedChannels} // ✅ pass down
+          connectedChannels={connectedChannels}
         />
       </div>
     </div>

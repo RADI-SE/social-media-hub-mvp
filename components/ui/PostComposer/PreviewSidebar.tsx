@@ -30,7 +30,7 @@ export function PreviewSidebar({
   const ChannelIcon = channel === "instagram" ? InstagramIcon : FacebookIcon;
 
   return (
-    <aside className="w-80 border-l border-gray-200 bg-gray-50 flex flex-col p-4 overflow-y-auto">
+    <aside className="flex min-h-0 w-80 flex-col overflow-y-auto border-l border-gray-200 bg-gray-50 p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-gray-700">Preview</h2>
         <Info size={16} className="text-gray-400" />

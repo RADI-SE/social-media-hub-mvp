@@ -185,11 +185,11 @@ export function PostComposer({
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
       <div
-        className={`relative bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden w-[90vw] transition-all duration-200 ${
+        className={`relative flex max-h-[calc(100dvh-2rem)] min-h-0 w-[90vw] flex-col overflow-hidden rounded-lg bg-white shadow-2xl transition-all duration-200 ${
           previewOpen ? "max-w-6xl" : "max-w-3xl"
         }`}
       >
@@ -201,8 +201,8 @@ export function PostComposer({
           onClose={onClose}
         />
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 flex flex-col overflow-y-auto p-6">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
             <ChannelSelector
               selected={selectedChannel}
               onSelect={setSelectedChannel}
