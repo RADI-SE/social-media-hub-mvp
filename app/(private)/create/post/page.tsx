@@ -10,10 +10,20 @@ import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
 import { publishPost } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
 
+function getUnsupportedPublishingMessage(platform: Platform, image?: File) {
+  if (platform === "Instagram") {
+    return "Instagram is ready in the composer, but publishing is not connected to the server yet.";
+  }
+  if (image) {
+    return "Image attachments are ready in the composer, but the publishing server still needs an image upload endpoint.";
+  }
+  return null;
+}
+
 export default function CreatePage() {
   const router = useRouter();
   const { user } = useUser();
-  const { getToken } = useAuth(); 
+  const { getToken } = useAuth();
   const userId = user?.id;
 
   const [isPosting, setIsPosting] = useState(false);
@@ -23,9 +33,20 @@ export default function CreatePage() {
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
 
   // --- Immediate post ---
-  const handlePost = async (content: string, platform: Platform) => {
+  const handlePost = async (
+    content: string,
+    platform: Platform,
+    _targetUrl?: string,
+    image?: File,
+  ) => {
     if (!userId) {
       toast.error("You must be logged in.");
+      return;
+    }
+
+    const unsupportedMessage = getUnsupportedPublishingMessage(platform, image);
+    if (unsupportedMessage) {
+      toast.error(unsupportedMessage);
       return;
     }
 
@@ -33,8 +54,8 @@ export default function CreatePage() {
     const loadingToast = toast.loading("Publishing...");
 
     try {
-     const token = (await getToken()) ?? undefined;
- 
+      const token = (await getToken()) ?? undefined;
+
       const result = await publishPost(userId, content, token);
       if (!result.success) {
         toast.dismiss(loadingToast);
@@ -61,9 +82,21 @@ export default function CreatePage() {
   };
 
   // --- Scheduled post ---
-  const handleSchedule = async (content: string, scheduledAt: number, platform: Platform) => {
+  const handleSchedule = async (
+    content: string,
+    scheduledAt: number,
+    platform: Platform,
+    _targetUrl?: string,
+    image?: File,
+  ) => {
     if (!userId) {
       toast.error("You must be logged in.");
+      return;
+    }
+
+    const unsupportedMessage = getUnsupportedPublishingMessage(platform, image);
+    if (unsupportedMessage) {
+      toast.error(unsupportedMessage);
       return;
     }
 
