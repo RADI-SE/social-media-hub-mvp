@@ -1,23 +1,101 @@
 // lib/api.ts
 
-const SCRIPT_URL = "/api/proxy"; // ✅ Use the proxy consistently
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY; // fallback (optional)
+const SCRIPT_URL = '/api/proxy';
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
-// Helper to build headers
 function buildHeaders(token?: string) {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   };
   if (API_KEY) {
-    headers["x-api-key"] = API_KEY;
+    headers['x-api-key'] = API_KEY;
   }
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
+    console.log(`🔍 [buildHeaders] Adding Authorization header with token length: ${token.length}`);
+  } else {
+    console.log(`🔍 [buildHeaders] No token provided`);
   }
   return headers;
 }
 
-// --- Publish a post (immediate) ---
+export async function getSessionStatus(userId: string, token?: string) {
+  const url = `${SCRIPT_URL}/api/session-status?userId=${encodeURIComponent(userId)}&_=${Date.now()}`;
+  const response = await fetch(url, { headers: buildHeaders(token), cache: 'no-cache' });
+  if (!response.ok) throw new Error(`Failed to check session status: ${response.status}`);
+  return response.json();
+}
+
+// lib/api.ts
+
+export async function getInstagramSessionStatus(userId: string, token?: string) {
+  const url = `${SCRIPT_URL}/api/instagram/session-status?userId=${encodeURIComponent(userId)}&_=${Date.now()}`;
+  console.log(`🔍 [getInstagramSessionStatus] Fetching URL: ${url}`);
+  console.log(`🔍 [getInstagramSessionStatus] Token present: ${!!token}, length: ${token?.length || 0}`);
+
+  const response = await fetch(url, {
+    headers: buildHeaders(token),
+    cache: 'no-cache',
+  });
+
+  console.log(`🔍 [getInstagramSessionStatus] Response status: ${response.status}`);
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error(`❌ [getInstagramSessionStatus] Error response body:`, text);
+    throw new Error(`Failed to check Instagram session status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log(`🔍 [getInstagramSessionStatus] Response data:`, data);
+  return data;
+}
+ 
+
+export async function refreshSession(userId: string, token?: string) {
+  const response = await fetch(`${SCRIPT_URL}/api/refresh-session`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ userId }),
+    cache: 'no-cache',
+  });
+  if (!response.ok) throw new Error("Failed to refresh Facebook session");
+  return response.json();
+}
+
+export async function disconnectSession(userId: string, token?: string) {
+  const response = await fetch(`${SCRIPT_URL}/api/disconnect`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ userId }),
+  });
+  if (!response.ok) throw new Error("Failed to disconnect Facebook session");
+  return response.json();
+}
+
+export async function refreshInstagramSession(userId: string, token?: string) {
+  const response = await fetch(`${SCRIPT_URL}/api/instagram/refresh-session`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ userId }),
+    cache: 'no-cache',
+  });
+  if (!response.ok) throw new Error("Failed to refresh Instagram session");
+  return response.json();
+}
+
+export async function disconnectInstagramSession(userId: string, token?: string) {
+  const response = await fetch(`${SCRIPT_URL}/api/instagram/disconnect`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ userId }),
+  });
+  if (!response.ok) throw new Error("Failed to disconnect Instagram session");
+  return response.json();
+}
+
+// ── Publishing endpoints (unchanged) ──────────────────────────────────
+
 export async function publishPost(userId: string, content: string, token?: string) {
   const response = await fetch(`${SCRIPT_URL}/api/post`, {
     method: "POST",
@@ -28,7 +106,6 @@ export async function publishPost(userId: string, content: string, token?: strin
   return response.json();
 }
 
-// --- Publish a comment (immediate) ---
 export async function publishComment(userId: string, postUrl: string, content: string, token?: string) {
   const response = await fetch(`${SCRIPT_URL}/api/comment`, {
     method: "POST",
@@ -39,7 +116,8 @@ export async function publishComment(userId: string, postUrl: string, content: s
   return response.json();
 }
 
-// --- Schedule a post ---
+// ── Scheduling endpoints ──────────────────────────────────────────────
+
 export async function schedulePost(userId: string, content: string, scheduledAt: number, token?: string) {
   const response = await fetch(`${SCRIPT_URL}/api/schedule`, {
     method: "POST",
@@ -50,7 +128,6 @@ export async function schedulePost(userId: string, content: string, scheduledAt:
   return response.json();
 }
 
-// --- Schedule a comment ---
 export async function scheduleComment(userId: string, postUrl: string, content: string, scheduledAt: number, token?: string) {
   const response = await fetch(`${SCRIPT_URL}/api/schedule`, {
     method: "POST",
@@ -61,7 +138,6 @@ export async function scheduleComment(userId: string, postUrl: string, content: 
   return response.json();
 }
 
-// --- Get scheduled tasks for a user ---
 export async function getScheduledTasks(userId: string, token?: string) {
   const response = await fetch(`${SCRIPT_URL}/api/schedule?userId=${userId}`, {
     headers: buildHeaders(token),
@@ -70,46 +146,11 @@ export async function getScheduledTasks(userId: string, token?: string) {
   return response.json();
 }
 
-// --- Cancel a scheduled task ---
 export async function cancelScheduledTask(taskId: string, token?: string) {
   const response = await fetch(`${SCRIPT_URL}/api/schedule/${taskId}`, {
     method: "DELETE",
     headers: buildHeaders(token),
   });
   if (!response.ok) throw new Error(`Failed to cancel task: ${response.statusText}`);
-  return response.json();
-}
-
-// --- Get session status (with cache busting) ---
-export async function getSessionStatus(userId: string, token?: string) {
-  const url = `${SCRIPT_URL}/api/session-status?userId=${userId}&_=${Date.now()}`;
-  const response = await fetch(url, {
-    headers: buildHeaders(token),
-    cache: 'no-cache',
-  });
-  if (!response.ok) throw new Error("Failed to check session status");
-  return response.json();
-}
-
-// --- Refresh session (connect) ---
-export async function refreshSession(userId: string, token?: string) {
-  const response = await fetch(`${SCRIPT_URL}/api/refresh-session`, {
-    method: "POST",
-    headers: buildHeaders(token),
-    body: JSON.stringify({ userId }),
-    cache: 'no-cache',
-  });
-  if (!response.ok) throw new Error("Failed to refresh session");
-  return response.json();
-}
-
-// --- Disconnect session ---
-export async function disconnectSession(userId: string, token?: string) {
-  const response = await fetch(`${SCRIPT_URL}/api/disconnect`, {
-    method: "POST",
-    headers: buildHeaders(token),
-    body: JSON.stringify({ userId }),
-  });
-  if (!response.ok) throw new Error("Failed to disconnect");
   return response.json();
 }
