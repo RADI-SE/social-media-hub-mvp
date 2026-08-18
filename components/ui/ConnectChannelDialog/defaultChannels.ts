@@ -1,5 +1,5 @@
 import { Channel } from "./types";
-import { FacebookIcon } from "../ChannelIcons";
+import { FacebookIcon, InstagramIcon } from "../ChannelIcons";
 
 export const defaultChannels: Channel[] = [
   {
@@ -7,5 +7,11 @@ export const defaultChannels: Channel[] = [
     name: "Facebook",
     subtitle: "Page or Group",
     icon: FacebookIcon,
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    subtitle: "Business or creator account",
+    icon: InstagramIcon,
   },
 ];
