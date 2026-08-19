@@ -10,9 +10,9 @@ function buildHeaders(token?: string) {
   }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-    console.log(`🔍 [buildHeaders] Adding Authorization header with token length: ${token.length}`);
+    console.log(`[buildHeaders] Adding Authorization header with token length: ${token.length}`);
   } else {
-    console.log(`🔍 [buildHeaders] No token provided`);
+    console.log(`[buildHeaders] No token provided`);
   }
   return headers;
 }
@@ -23,8 +23,6 @@ export async function getSessionStatus(userId: string, token?: string) {
   if (!response.ok) throw new Error(`Failed to check session status: ${response.status}`);
   return response.json();
 }
-
-// ── Instagram Post & Comment ─────────────────────────────────────
 
 export async function publishInstagramPost(
   userId: string,
@@ -38,7 +36,7 @@ export async function publishInstagramPost(
     body: JSON.stringify({
       userId,
       caption,
-      imageBase64, // send base64; the backend will save to temp and pass to the script
+      imageBase64, 
     }),
   });
   if (!response.ok) {
@@ -68,27 +66,21 @@ export async function publishInstagramComment(
 
 export async function getInstagramSessionStatus(userId: string, token?: string) {
   const url = `${SCRIPT_URL}/api/instagram/session-status?userId=${encodeURIComponent(userId)}&_=${Date.now()}`;
-  console.log(`🔍 [getInstagramSessionStatus] Fetching URL: ${url}`);
-  console.log(`🔍 [getInstagramSessionStatus] Token present: ${!!token}, length: ${token?.length || 0}`);
-
+   
   const response = await fetch(url, {
     headers: buildHeaders(token),
     cache: 'no-cache',
   });
 
-  console.log(`🔍 [getInstagramSessionStatus] Response status: ${response.status}`);
-
+ 
   if (!response.ok) {
-    const text = await response.text();
-    console.error(`❌ [getInstagramSessionStatus] Error response body:`, text);
-    throw new Error(`Failed to check Instagram session status: ${response.status}`);
+    await response.text();
+     throw new Error(`Failed to check Instagram session status: ${response.status}`);
   }
 
   const data = await response.json();
-  console.log(`🔍 [getInstagramSessionStatus] Response data:`, data);
-  return data;
+   return data;
 }
-
 
 
 export async function refreshSession(userId: string, token?: string) {
@@ -137,7 +129,7 @@ export async function publishPost(
   userId: string,
   content: string,
   token?: string,
-  imageBase64?: string // 👈 new
+  imageBase64?: string 
 ) {
   const response = await fetch(`${SCRIPT_URL}/api/post`, {
     method: "POST",
@@ -163,23 +155,60 @@ export async function publishComment(userId: string, postUrl: string, content: s
 }
 
 
-export async function schedulePost(userId: string, content: string, scheduledAt: number, token?: string) {
+export async function schedulePost(params: {
+  userId: string;
+  content: string;
+  scheduledAt: number;
+  token?: string;
+  platform?: string;
+  mediaUrl?: string;
+}) {
+  const { userId, content, scheduledAt, token, platform, mediaUrl } = params;
   const response = await fetch(`${SCRIPT_URL}/api/schedule`, {
     method: "POST",
     headers: buildHeaders(token),
-    body: JSON.stringify({ userId, type: "post", content, scheduledAt }),
+    body: JSON.stringify({
+      userId,
+      type: "post",
+      content,
+      scheduledAt,
+      platform: platform || 'facebook',
+      mediaUrl,
+    }),
   });
   if (!response.ok) throw new Error(`Failed to schedule post: ${response.statusText}`);
   return response.json();
 }
 
-export async function scheduleComment(userId: string, postUrl: string, content: string, scheduledAt: number, token?: string) {
+export async function scheduleComment(params: {
+  userId: string;
+  targetUrl: string;
+  authorName: string;
+  content: string;
+  scheduledAt: number;
+  platform: string;
+  classification?: string;
+  token?: string;
+}) {
+  const { userId, targetUrl, authorName, content, scheduledAt, platform, classification, token } = params;
   const response = await fetch(`${SCRIPT_URL}/api/schedule`, {
     method: "POST",
     headers: buildHeaders(token),
-    body: JSON.stringify({ userId, type: "comment", target: postUrl, content, scheduledAt }),
+    body: JSON.stringify({
+      userId,
+      type: "comment",
+      target: targetUrl,
+      content,
+      scheduledAt,
+      platform,
+      authorName,
+      classification,
+    }),
   });
-  if (!response.ok) throw new Error(`Failed to schedule comment: ${response.statusText}`);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to schedule comment: ${response.status} ${text}`);
+  }
   return response.json();
 }
 
@@ -198,4 +227,21 @@ export async function cancelScheduledTask(taskId: string, token?: string) {
   });
   if (!response.ok) throw new Error(`Failed to cancel task: ${response.statusText}`);
   return response.json();
+}
+
+export async function uploadTempImage(
+ imageBase64: string,
+  token?: string
+): Promise<string> {
+  const response = await fetch(`${SCRIPT_URL}/api/upload-temp`, {
+    method: "POST",
+    headers: buildHeaders(token),
+    body: JSON.stringify({ imageBase64 }),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Image upload failed: ${text}`);
+  }
+  const data = await response.json();
+  return data.path;
 }

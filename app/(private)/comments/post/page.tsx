@@ -4,19 +4,18 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
 import { useComposerWorkflow } from "@/hooks/useComposerWorkflow";
-import { publishComment, publishInstagramComment } from "@/lib/api";
+import { publishComment, publishInstagramComment, scheduleComment } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
 
 export default function CommentPage() {
   const workflow = useComposerWorkflow();
   const createComment = useMutation(api.comments.createComment);
-  const scheduleComment = useMutation(api.comments.scheduleComment);
-  const authorName =
+   const authorName =
     workflow.user?.fullName || workflow.user?.username || "You";
 
   const validate = (targetUrl?: string) => {
     if (!targetUrl) return "A post URL is required.";
-     try {
+    try {
       new URL(targetUrl);
     } catch {
       return "Invalid URL. Please enter a valid post URL.";
@@ -24,11 +23,11 @@ export default function CommentPage() {
     return null;
   };
 
-   const detectPlatform = (url: string): Platform => {
+  const detectPlatform = (url: string): Platform => {
     if (url.includes('instagram.com/p/') || url.includes('instagram.com/reel/')) {
       return 'Instagram';
     }
-     return 'Facebook';
+    return 'Facebook';
   };
 
   const handlePost = async (
@@ -46,16 +45,17 @@ export default function CommentPage() {
         const token = (await workflow.getToken()) ?? undefined;
         const platform = detectPlatform(targetUrl);
         if (platform === 'Instagram') {
-           await publishInstagramComment(userId, targetUrl, content, token);
+          await publishInstagramComment(userId, targetUrl, content, token);
         } else {
-           await publishComment(userId, targetUrl, content, token);
+          await publishComment(userId, targetUrl, content, token);
         }
-         await createComment({
+        await createComment({
           userId,
           targetUrl,
           authorName,
           content,
           classification: "Engagement",
+          platform: platform === 'Instagram' ? 'instagram' : 'facebook',
         });
       },
     );
@@ -74,13 +74,17 @@ export default function CommentPage() {
       "schedule",
       { loading: "Scheduling comment...", success: "Comment scheduled!" },
       async () => {
+        const platform = detectPlatform(targetUrl);
+        const token = (await workflow.getToken()) ?? undefined;
         await scheduleComment({
           userId,
           targetUrl,
           authorName,
           content,
           scheduledAt,
+          platform: platform === 'Instagram' ? 'instagram' : 'facebook',
           classification: "Engagement",
+          token,
         });
       },
     );

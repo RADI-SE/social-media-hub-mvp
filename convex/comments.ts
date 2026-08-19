@@ -1,13 +1,13 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// --- Create immediate comment (published) ---
 export const createComment = mutation({
   args: {
     userId: v.string(),
     targetUrl: v.string(),
     authorName: v.string(),
     content: v.string(),
+    platform: v.union(v.literal("facebook"), v.literal("instagram")),
     classification: v.optional(v.union(
       v.literal("Lead"),
       v.literal("Question"),
@@ -23,14 +23,14 @@ export const createComment = mutation({
       targetUrl: args.targetUrl,
       authorName: args.authorName,
       content: args.content,
+      platform: args.platform,
       classification: args.classification || "Engagement",
-      status: "Published", // uppercase
+      status: "Published",
       createdAt: Date.now(),
     });
   },
 });
 
-// --- Schedule a comment (future) ---
 export const scheduleComment = mutation({
   args: {
     userId: v.string(),
@@ -38,6 +38,7 @@ export const scheduleComment = mutation({
     authorName: v.string(),
     content: v.string(),
     scheduledAt: v.number(),
+    platform: v.union(v.literal("facebook"), v.literal("instagram")),
     classification: v.optional(v.union(
       v.literal("Lead"),
       v.literal("Question"),
@@ -53,15 +54,15 @@ export const scheduleComment = mutation({
       targetUrl: args.targetUrl,
       authorName: args.authorName,
       content: args.content,
+      platform: args.platform,
       classification: args.classification || "Engagement",
       scheduledAt: args.scheduledAt,
-      status: "Scheduled", // uppercase
+      status: "Scheduled",
       createdAt: Date.now(),
     });
   },
 });
 
-// --- Get scheduled comments due now (for cron) ---
 export const getScheduledComments = query({
   handler: async (ctx) => {
     const now = Date.now();
@@ -74,7 +75,18 @@ export const getScheduledComments = query({
   },
 });
 
-// --- Mark comment as published ---
+export const markCommentProcessing = mutation({
+  args: { commentId: v.id("comments") },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) throw new Error("Comment not found");
+    if (comment.status !== "Scheduled") return;
+    await ctx.db.patch(args.commentId, {
+      status: "Processing",
+    });
+  },
+});
+
 export const markCommentPublished = mutation({
   args: { commentId: v.id("comments") },
   handler: async (ctx, args) => {
@@ -84,17 +96,16 @@ export const markCommentPublished = mutation({
   },
 });
 
-// --- Mark comment as failed ---
 export const markCommentFailed = mutation({
-  args: { commentId: v.id("comments") },
+  args: { commentId: v.id("comments"), error: v.optional(v.string()) },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.commentId, {
       status: "Failed",
+      error: args.error,
     });
   },
 });
 
-// --- Get all comments for a user ---
 export const getCommentsForUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -105,18 +116,6 @@ export const getCommentsForUser = query({
   },
 });
 
-// --- Get comments for a post ---
-export const getCommentsForPost = query({
-  args: { postId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("comments")
-      .withIndex("by_postId", (q) => q.eq("postId", args.postId))
-      .collect();
-  },
-});
-
-// --- Delete a comment ---
 export const deleteComment = mutation({
   args: { commentId: v.id("comments") },
   handler: async (ctx, args) => {

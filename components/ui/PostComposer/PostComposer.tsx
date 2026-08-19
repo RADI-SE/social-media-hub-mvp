@@ -114,8 +114,7 @@ export function PostComposer({
     }
   };
   const handlePost = () => {
-    console.log("🔵 handlePost called, targetUrl:", targetUrl);
-
+ 
     if (mode === "comment") {
       const trimmedUrl = targetUrl.trim();
       if (!trimmedUrl) {

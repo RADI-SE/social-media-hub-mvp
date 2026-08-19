@@ -7,7 +7,13 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
-import { publishPost, publishInstagramPost } from "@/lib/api";
+import {
+  publishPost,
+  publishInstagramPost,
+  schedulePost,
+  uploadTempImage,
+} from "@/lib/api";
+import { fileToBase64 } from "@/lib/image"; 
 import { type Platform } from "@/types/social-account";
 
 export default function CreatePage() {
@@ -19,20 +25,9 @@ export default function CreatePage() {
   const [isPosting, setIsPosting] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
 
-  const schedulePost = useMutation(api.posts.schedulePost);
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
 
-  // ── Helper: convert File to base64 ──────────────────────────────
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
 
-  // ── Immediate post ──────────────────────────────────────────────
   const handlePost = async (
     content: string,
     platform: Platform,
@@ -51,15 +46,13 @@ export default function CreatePage() {
       const token = (await getToken()) ?? undefined;
       let imageBase64: string | undefined;
       if (image) {
-        imageBase64 = await fileToBase64(image);
+        imageBase64 = await fileToBase64(image); 
       }
 
       let result;
       if (platform === "Instagram") {
-        // Instagram post requires a caption (content) and optional image
         result = await publishInstagramPost(userId, content, token, imageBase64);
       } else {
-        // Facebook post
         result = await publishPost(userId, content, token, imageBase64);
       }
 
@@ -85,8 +78,7 @@ export default function CreatePage() {
       setIsPosting(false);
     }
   };
-
-  // ── Scheduled post ──────────────────────────────────────────────
+ 
   const handleSchedule = async (
     content: string,
     scheduledAt: number,
@@ -99,20 +91,33 @@ export default function CreatePage() {
       return;
     }
 
-    if (image) {
-      toast.warning("Image attachments are not supported in scheduled posts yet.");
-    }
-
     setIsScheduling(true);
     const loadingToast = toast.loading(`Scheduling on ${platform}...`);
 
     try {
+      const token = (await getToken()) ?? undefined;
+      let mediaUrl: string | undefined;
+
+      if (image) {
+        const imageBase64 = await fileToBase64(image); // ✅ uses imported helper
+        mediaUrl = await uploadTempImage(imageBase64, token); // ✅ API function with token
+      }
+
+      if (platform === "Instagram" && !mediaUrl) {
+        toast.dismiss(loadingToast);
+        toast.error("Instagram scheduled posts require an image.");
+        return;
+      }
+
       await schedulePost({
         userId,
-        platform,
         content,
         scheduledAt,
+        platform: platform === "Instagram" ? "instagram" : "facebook",
+        mediaUrl,
+        token,
       });
+
       toast.dismiss(loadingToast);
       toast.success(`Post scheduled on ${platform}!`);
       router.push("/home");

@@ -30,8 +30,7 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const authHeader = request.headers.get("authorization");
 
-  console.log(`🔍 Proxy POST - path: ${path}, url: ${url}`);
-  const headers: HeadersInit = {
+   const headers: HeadersInit = {
     "Content-Type": "application/json",
     "x-api-key": API_KEY as string,
   };
@@ -44,8 +43,7 @@ export async function POST(request: NextRequest) {
     headers,
     body,
   });
-  console.log(`🔍 Proxy POST - response status: ${response.status}`);
-
+ 
   return new NextResponse(response.body, {
     status: response.status,
     headers: response.headers,

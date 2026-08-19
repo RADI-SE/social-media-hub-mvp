@@ -49,8 +49,6 @@ export const getOrCreate = mutation({
       createdAt: Date.now(),
     });
 
-    console.log("userID",userId )
-
     return await ctx.db.get(userId);
   },
 });

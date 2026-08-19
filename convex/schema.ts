@@ -45,7 +45,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_userId", ["userId"])
-    .index("by_status", ["status"]),  
+    .index("by_status", ["status"]),
 
 
   analytics: defineTable({
@@ -61,31 +61,27 @@ export default defineSchema({
 
 
   comments: defineTable({
-    userId: v.optional(v.string()),
-    postId: v.optional(v.string()),
-    targetUrl: v.optional(v.string()),
+    userId: v.string(),
+    targetUrl: v.string(),
+    postId: v.optional(v.id("posts")), 
     authorName: v.string(),
     content: v.string(),
-    classification: v.union(
-      v.literal("Lead"),
-      v.literal("Question"),
-      v.literal("Complaint"),
-      v.literal("Feedback"),
-      v.literal("Engagement"),
-      v.literal("Other"),
-    ),
+    classification: v.string(),
+    platform: v.union(v.literal("facebook"), v.literal("instagram")), 
     scheduledAt: v.optional(v.number()),
-    status: v.optional(v.union(   // make optional
+    status: v.union(
       v.literal("Scheduled"),
+      v.literal("Processing"), 
       v.literal("Published"),
-      v.literal("Failed"),
-    )),
+      v.literal("Failed")
+    ),
+    error: v.optional(v.string()), 
     createdAt: v.number(),
   })
     .index("by_userId", ["userId"])
-    .index("by_postId", ["postId"])
-    .index("by_classification", ["classification"])
-    .index("by_status_scheduled", ["status", "scheduledAt"]),
+    .index("by_status_scheduled", ["status", "scheduledAt"])
+    .index("by_platform", ["platform"])
+    .index("by_postId", ["postId"]),
 
   followUpTasks: defineTable({
     commentId: v.id("comments"),
@@ -105,4 +101,6 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_commentId", ["commentId"])
     .index("by_status", ["status"]),
+
+    
 });

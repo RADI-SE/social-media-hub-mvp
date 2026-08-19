@@ -46,8 +46,7 @@ Do not include any extra text, introductions, or conclusions. Only the numbered 
     if (!text) {
       throw new Error("No content generated.");
     }
-
-    // Parse the numbered list
+ 
     const captions: string[] = [];
     const lines = text.split('\n');
     for (const line of lines) {
@@ -56,8 +55,7 @@ Do not include any extra text, introductions, or conclusions. Only the numbered 
         captions.push(match[1].trim());
       }
     }
-
-    // If we didn't get enough, try to split by double newline
+ 
     if (captions.length < variations) {
       const parts = text.split(/\n\s*\n/);
       if (parts.length >= variations) {
@@ -67,15 +65,14 @@ Do not include any extra text, introductions, or conclusions. Only the numbered 
         }
       }
     }
-
-    // Fallback: if still not enough, treat the whole text as one caption
+ 
     if (captions.length === 0) {
       captions.push(text);
     }
 
     return NextResponse.json({ success: true, captions });
   } catch (error: any) {
-    console.error("❌ AI generation error:", error);
+    console.error("AI generation error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to generate content" },
       { status: 500 }
