@@ -27,7 +27,6 @@ export default function CreatePage() {
 
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
 
-
   const handlePost = async (
     content: string,
     platform: Platform,
@@ -46,7 +45,7 @@ export default function CreatePage() {
       const token = (await getToken()) ?? undefined;
       let imageBase64: string | undefined;
       if (image) {
-        imageBase64 = await fileToBase64(image); 
+        imageBase64 = await fileToBase64(image);
       }
 
       let result;
@@ -78,7 +77,7 @@ export default function CreatePage() {
       setIsPosting(false);
     }
   };
- 
+
   const handleSchedule = async (
     content: string,
     scheduledAt: number,
@@ -99,8 +98,9 @@ export default function CreatePage() {
       let mediaUrl: string | undefined;
 
       if (image) {
-        const imageBase64 = await fileToBase64(image); // ✅ uses imported helper
-        mediaUrl = await uploadTempImage(imageBase64, token); // ✅ API function with token
+        const imageBase64 = await fileToBase64(image);
+        mediaUrl = await uploadTempImage(imageBase64, userId, token);
+        console.log(`📸 Image uploaded to temp: ${mediaUrl}`);
       }
 
       if (platform === "Instagram" && !mediaUrl) {

@@ -228,15 +228,19 @@ export async function cancelScheduledTask(taskId: string, token?: string) {
   if (!response.ok) throw new Error(`Failed to cancel task: ${response.statusText}`);
   return response.json();
 }
-
+ 
 export async function uploadTempImage(
- imageBase64: string,
+  imageBase64: string,
+  userId: string,  
   token?: string
 ): Promise<string> {
   const response = await fetch(`${SCRIPT_URL}/api/upload-temp`, {
     method: "POST",
     headers: buildHeaders(token),
-    body: JSON.stringify({ imageBase64 }),
+    body: JSON.stringify({ 
+      imageBase64,
+      userId, 
+    }),
   });
   if (!response.ok) {
     const text = await response.text();
