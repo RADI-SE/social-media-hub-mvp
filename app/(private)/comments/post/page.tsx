@@ -4,7 +4,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PostComposer } from "@/components/ui/PostComposer/PostComposer";
 import { useComposerWorkflow } from "@/hooks/useComposerWorkflow";
-import { publishComment } from "@/lib/api";
+import { publishComment, publishInstagramComment } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
 
 export default function CommentPage() {
@@ -15,7 +15,20 @@ export default function CommentPage() {
     workflow.user?.fullName || workflow.user?.username || "You";
 
   const validate = (targetUrl?: string) => {
-    if (!targetUrl) return "A Facebook post URL is required.";
+    if (!targetUrl) return "A post URL is required.";
+     try {
+      new URL(targetUrl);
+    } catch {
+      return "Invalid URL. Please enter a valid post URL.";
+    }
+    return null;
+  };
+
+   const detectPlatform = (url: string): Platform => {
+    if (url.includes('instagram.com/p/') || url.includes('instagram.com/reel/')) {
+      return 'Instagram';
+    }
+     return 'Facebook';
   };
 
   const handlePost = async (
@@ -31,8 +44,13 @@ export default function CommentPage() {
       { loading: "Posting comment...", success: "Comment posted!" },
       async () => {
         const token = (await workflow.getToken()) ?? undefined;
-        await publishComment(userId, targetUrl, content, token);
-        await createComment({
+        const platform = detectPlatform(targetUrl);
+        if (platform === 'Instagram') {
+           await publishInstagramComment(userId, targetUrl, content, token);
+        } else {
+           await publishComment(userId, targetUrl, content, token);
+        }
+         await createComment({
           userId,
           targetUrl,
           authorName,

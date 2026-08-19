@@ -1,4 +1,3 @@
-// app/(private)/connect/social-accounts/page.tsx
 "use client";
 
 import { ConnectChannelDialog } from "@/components/ui/ConnectChannelDialog";
