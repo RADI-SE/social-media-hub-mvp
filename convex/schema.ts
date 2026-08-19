@@ -33,31 +33,19 @@ export default defineSchema({
 
   posts: defineTable({
     userId: v.string(),
-    platform: v.union(
-      v.literal("Instagram"),
-      v.literal("Facebook"),
-      v.literal("LinkedIn"),
-      v.literal("TikTok"),
-      v.literal("X")
-    ),
+    platform: v.union(v.literal("Instagram"), v.literal("Facebook"), v.literal("LinkedIn"), v.literal("TikTok"), v.literal("X")),
     content: v.string(),
     mediaUrl: v.optional(v.string()),
     socialAccountId: v.optional(v.string()),
-    status: v.union(
-      v.literal("Draft"),
-      v.literal("Scheduled"),
-      v.literal("Published"),
-      v.literal("Failed")
-    ),
+    status: v.union(v.literal("Scheduled"), v.literal("Processing"), v.literal("Published"), v.literal("Failed")),
     scheduledAt: v.optional(v.number()),
     publishedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-    type: v.optional(v.union(v.literal("post"), v.literal("comment"))), // add this to allow existing data
   })
     .index("by_userId", ["userId"])
-    .index("by_status", ["status"])
-    .index("by_scheduledAt", ["scheduledAt"]),
+    .index("by_status", ["status"]),  
 
 
   analytics: defineTable({

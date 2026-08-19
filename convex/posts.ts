@@ -1,7 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-
-// --- Record a published post (immediate) ---
+ 
 export const recordPublishedPost = mutation({
   args: {
     userId: v.string(),
@@ -31,9 +30,7 @@ export const recordPublishedPost = mutation({
     return id;
   },
 });
-
-
-// Get published posts for a user (for analytics)
+ 
 export const getPublishedPostsForUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -44,8 +41,7 @@ export const getPublishedPostsForUser = query({
       .collect();
   },
 });
-
-// --- Schedule a post ---
+ 
 export const schedulePost = mutation({
   args: {
     userId: v.string(),
@@ -76,8 +72,7 @@ export const schedulePost = mutation({
     return id;
   },
 });
-
-// --- Get all posts for a user ---
+ 
 export const getPostsForUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -88,8 +83,8 @@ export const getPostsForUser = query({
       .collect();
   },
 });
+ 
 
-// --- Get scheduled posts due now (for cron) ---
 export const getScheduledItems = query({
   handler: async (ctx) => {
     const now = Date.now();
@@ -101,7 +96,7 @@ export const getScheduledItems = query({
   },
 });
 
-// --- Get scheduled posts for a user ---
+
 export const getScheduledItemsForUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -113,7 +108,23 @@ export const getScheduledItemsForUser = query({
   },
 });
 
-// --- Mark post as published ---
+
+export const markItemProcessing = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+    if (post.status !== "Scheduled") {
+      return;
+    }
+    await ctx.db.patch(args.postId, {
+      status: "Processing",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+
 export const markItemPublished = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -125,18 +136,19 @@ export const markItemPublished = mutation({
   },
 });
 
-// --- Mark post as failed ---
+
 export const markItemFailed = mutation({
   args: { postId: v.id("posts"), error: v.optional(v.string()) },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.postId, {
       status: "Failed",
+      error: args.error,
       updatedAt: Date.now(),
     });
   },
 });
 
-// --- Cancel a scheduled post ---
+
 export const cancelScheduledItem = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -146,8 +158,8 @@ export const cancelScheduledItem = mutation({
     await ctx.db.delete(args.postId);
   },
 });
+ 
 
-// --- Delete a post ---
 export const deletePost = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -155,7 +167,6 @@ export const deletePost = mutation({
   },
 });
 
-// --- Retry a failed post ---
 export const retryPost = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -164,7 +175,7 @@ export const retryPost = mutation({
     if (item.status !== "Failed") throw new Error("Only failed posts can be retried");
     await ctx.db.patch(args.postId, {
       status: "Scheduled",
-      scheduledAt: Date.now() + 60000,
+      scheduledAt: Date.now() + 60000, 
       updatedAt: Date.now(),
     });
   },
