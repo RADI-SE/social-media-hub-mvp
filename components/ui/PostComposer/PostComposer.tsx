@@ -20,14 +20,14 @@ interface PostComposerProps {
   onClose: () => void;
   onPost?: (
     content: string,
-    platform: Platform,
+    platforms: Platform[],
     targetUrl?: string,
     image?: File,
   ) => void;
   onSchedule?: (
     content: string,
     scheduledAt: number,
-    platform: Platform,
+    platforms: Platform[],
     targetUrl?: string,
     image?: File,
   ) => void;
@@ -47,8 +47,9 @@ export function PostComposer({
   mode = "post",
   initialTargetUrl = "",
 }: PostComposerProps) {
-  const [selectedChannel, setSelectedChannel] =
-    useState<ComposerChannelId | null>(null);
+  const [selectedChannels, setSelectedChannels] = useState<ComposerChannelId[]>(
+    [],
+  );
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -61,8 +62,27 @@ export function PostComposer({
   const backdropRef = useRef<HTMLDivElement>(null);
   const imagePreviewUrlRef = useRef<string | null>(null);
 
-  const channel = COMPOSER_CHANNELS.find((item) => item.id === selectedChannel);
+  const selectedChannelConfigs = COMPOSER_CHANNELS.filter((item) =>
+    selectedChannels.includes(item.id),
+  );
+  const channel = selectedChannelConfigs[0];
   const ChannelIcon = channel?.icon;
+  const targetChannelName = channel?.label ?? "Social media";
+  const targetUrlPlaceholder =
+    channel?.id === "instagram"
+      ? "https://www.instagram.com/p/..."
+      : channel?.id === "facebook"
+        ? "https://www.facebook.com/share/p/..."
+        : "https://...";
+
+  const handleChannelToggle = (id: ComposerChannelId) => {
+    setSelectedChannels((current) => {
+      if (mode === "comment") return current.includes(id) ? [] : [id];
+      return current.includes(id)
+        ? current.filter((channelId) => channelId !== id)
+        : [...current, id];
+    });
+  };
 
   useEffect(
     () => () => {
@@ -114,27 +134,11 @@ export function PostComposer({
     }
   };
   const handlePost = () => {
- 
-    if (mode === "comment") {
-      const trimmedUrl = targetUrl.trim();
-      if (!trimmedUrl) {
-        toast.error("Please enter a post URL.");
-        return;
-      }
-      try {
-        new URL(trimmedUrl);
-      } catch {
-        toast.error(
-          "Please enter a valid URL (e.g., https://www.facebook.com/...)",
-        );
-        return;
-      }
-    }
     if (onPost && content.trim()) {
-      const platform = channel?.platform ?? "Facebook";
+      const platforms = selectedChannelConfigs.map((item) => item.platform);
       onPost(
         content,
-        platform,
+        platforms,
         mode === "comment" ? targetUrl : undefined,
         image ?? undefined,
       );
@@ -151,25 +155,12 @@ export function PostComposer({
       toast.error("Scheduled time must be in the future.");
       return;
     }
-    if (mode === "comment") {
-      const trimmedUrl = targetUrl.trim();
-      if (!trimmedUrl) {
-        toast.error("Please enter a post URL.");
-        return;
-      }
-      try {
-        new URL(trimmedUrl);
-      } catch {
-        toast.error("Please enter a valid URL.");
-        return;
-      }
-    }
     if (onSchedule && content.trim()) {
-      const platform = channel?.platform ?? "Facebook";
+      const platforms = selectedChannelConfigs.map((item) => item.platform);
       onSchedule(
         content,
         timestamp,
-        platform,
+        platforms,
         mode === "comment" ? targetUrl : undefined,
         image ?? undefined,
       );
@@ -203,28 +194,28 @@ export function PostComposer({
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
             <ChannelSelector
-              selected={selectedChannel}
-              onSelect={setSelectedChannel}
+              selected={selectedChannels}
+              onToggle={handleChannelToggle}
+              multiple={mode === "post"}
             />
 
             {mode === "comment" && (
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                  Facebook Post URL
+                  {targetChannelName} Post URL
                 </label>
                 <div className="relative">
                   <input
                     type="url"
                     value={targetUrl}
                     onChange={(e) => setTargetUrl(e.target.value)}
-                    placeholder="https://www.facebook.com/share/p/..."
+                    placeholder={targetUrlPlaceholder}
                     className="w-full border border-gray-200 rounded-md p-4 focus-within:ring-2 focus-within:ring-blue-500 px-4 py-3 pl-10"
                   />
                   <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 </div>
                 <p className="mt-1.5 text-xs text-gray-400">
-                  Paste the full Facebook post link (e.g.,
-                  https://www.facebook.com/share/p/1Up3sopZMV/)
+                  Paste the full post link from the selected channel.
                 </p>
               </div>
             )}
@@ -268,7 +259,7 @@ export function PostComposer({
           {previewOpen && !aiOpen && (
             <PreviewSidebar
               content={content}
-              channel={selectedChannel}
+              channels={selectedChannels}
               imageUrl={imagePreviewUrl}
             />
           )}
@@ -277,9 +268,14 @@ export function PostComposer({
               isOpen={aiOpen}
               onClose={handleToggleAI}
               onApplyContent={setContent}
-              channel={channel?.label ?? "Facebook"}
+              channel={
+                selectedChannelConfigs.map((item) => item.label).join(" & ") ||
+                "Facebook"
+              }
               channelIcon={
-                ChannelIcon ? <ChannelIcon className="h-4 w-4" /> : null
+                selectedChannelConfigs.length === 1 && ChannelIcon ? (
+                  <ChannelIcon className="h-4 w-4" />
+                ) : null
               }
               mode={mode}
             />
@@ -287,12 +283,12 @@ export function PostComposer({
         </div>
 
         <PostComposerFooter
-          selectedCount={selectedChannel ? 1 : 0}
+          selectedCount={selectedChannels.length}
           onPost={handlePost}
           isPosting={isPosting}
           isDisabled={
             !content.trim() ||
-            !selectedChannel ||
+            selectedChannels.length === 0 ||
             (mode === "comment" && !targetUrl.trim())
           }
         />
