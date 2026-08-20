@@ -12,23 +12,19 @@ import {
   Eye,
 } from "lucide-react";
 
-import { FacebookIcon, InstagramIcon } from "../ChannelIcons";
-import { type ComposerChannelId } from "./ChannelSelector";
+import { COMPOSER_CHANNELS, type ComposerChannelId } from "./ChannelSelector";
 
 interface PreviewSidebarProps {
   content?: string;
-  channel?: ComposerChannelId | null;
+  channels?: readonly ComposerChannelId[];
   imageUrl?: string | null;
 }
 
 export function PreviewSidebar({
   content = "Start writing your post...",
-  channel,
+  channels = [],
   imageUrl,
 }: PreviewSidebarProps) {
-  const channelLabel = channel === "instagram" ? "Instagram" : "Facebook";
-  const ChannelIcon = channel === "instagram" ? InstagramIcon : FacebookIcon;
-
   return (
     <aside className="flex min-h-0 w-80 flex-col overflow-y-auto border-l border-gray-200 bg-gray-50 p-4">
       <div className="flex items-center justify-between mb-4">
@@ -36,21 +32,29 @@ export function PreviewSidebar({
         <Info size={16} className="text-gray-400" />
       </div>
 
-      {channel && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200">
-          <ChannelIcon className="h-4 w-4 text-blue-600" />
-          {channelLabel}
-        </div>
-      )}
+      <div className="flex-1 space-y-5">
+        {channels.length === 0 && <ByDefault />}
+        {channels.map((channelId) => {
+          const channel = COMPOSER_CHANNELS.find(
+            (item) => item.id === channelId,
+          );
+          if (!channel) return null;
+          const ChannelIcon = channel.icon;
 
-      <div className="flex-1">
-        {!channel && <ByDefault />}
-        {channel === "facebook" && (
-          <FacebookPreview content={content} imageUrl={imageUrl} />
-        )}
-        {channel === "instagram" && (
-          <InstagramPreview content={content} imageUrl={imageUrl} />
-        )}
+          return (
+            <section key={channelId} className="space-y-3">
+              <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200">
+                <ChannelIcon className="h-4 w-4 text-blue-600" />
+                {channel.label}
+              </div>
+              {channelId === "facebook" ? (
+                <FacebookPreview content={content} imageUrl={imageUrl} />
+              ) : (
+                <InstagramPreview content={content} imageUrl={imageUrl} />
+              )}
+            </section>
+          );
+        })}
       </div>
     </aside>
   );
@@ -172,7 +176,7 @@ function Avatar({ name }: { name: string }) {
 
 function ByDefault() {
   return (
-    <aside className="w-80 border-l border-gray-200 bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div className="flex h-full flex-col items-center justify-center p-6">
       <div className="text-center space-y-4">
         <div className="relative inline-block">
           <div className="w-24 h-24 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
@@ -191,6 +195,6 @@ function ByDefault() {
           <span>Live preview</span>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

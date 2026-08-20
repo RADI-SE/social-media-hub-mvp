@@ -28,29 +28,34 @@ export const COMPOSER_CHANNELS: ComposerChannel[] = [
 ];
 
 interface ChannelSelectorProps {
-  selected: ComposerChannelId | null;
-  onSelect: (id: ComposerChannelId) => void;
+  selected: readonly ComposerChannelId[];
+  onToggle: (id: ComposerChannelId) => void;
+  multiple?: boolean;
 }
 
-export function ChannelSelector({ selected, onSelect }: ChannelSelectorProps) {
+export function ChannelSelector({
+  selected,
+  onToggle,
+  multiple = true,
+}: ChannelSelectorProps) {
   return (
     <section className="mb-6 border-b border-gray-100 pb-4">
       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-        Select Channels
+        Select {multiple ? "Channels" : "Channel"}
       </h4>
       <div className="flex flex-wrap gap-2">
         {COMPOSER_CHANNELS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
-            onClick={() => onSelect(id)}
+            onClick={() => onToggle(id)}
             className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors text-gray-700 ${
-              selected === id
+              selected.includes(id)
                 ? "border-blue-500 bg-blue-50 text-blue-600"
                 : "border-gray-200 hover:border-gray-400"
             }`}
             aria-label={label}
-            aria-pressed={selected === id}
+            aria-pressed={selected.includes(id)}
             title={label}
           >
             <Icon className="w-5 h-5" />

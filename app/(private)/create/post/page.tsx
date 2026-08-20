@@ -13,8 +13,10 @@ import {
   schedulePost,
   uploadTempImage,
 } from "@/lib/api";
-import { fileToBase64 } from "@/lib/image"; 
+import { fileToBase64 } from "@/lib/image";
 import { type Platform } from "@/types/social-account";
+
+const formatPlatforms = (platforms: Platform[]) => platforms.join(" & ");
 
 export default function CreatePage() {
   const router = useRouter();
@@ -29,7 +31,7 @@ export default function CreatePage() {
 
   const handlePost = async (
     content: string,
-    platform: Platform,
+    platforms: Platform[],
     _targetUrl?: string,
     image?: File,
   ) => {
@@ -38,8 +40,14 @@ export default function CreatePage() {
       return;
     }
 
+    if (platforms.length === 0) {
+      toast.error("Select at least one channel.");
+      return;
+    }
+
+    const platformLabel = formatPlatforms(platforms);
     setIsPosting(true);
-    const loadingToast = toast.loading(`Publishing to ${platform}...`);
+    const loadingToast = toast.loading(`Publishing to ${platformLabel}...`);
 
     try {
       const token = (await getToken()) ?? undefined;
@@ -48,27 +56,21 @@ export default function CreatePage() {
         imageBase64 = await fileToBase64(image);
       }
 
-      let result;
-      if (platform === "Instagram") {
-        result = await publishInstagramPost(userId, content, token, imageBase64);
-      } else {
-        result = await publishPost(userId, content, token, imageBase64);
-      }
+      for (const platform of platforms) {
+        const result =
+          platform === "Instagram"
+            ? await publishInstagramPost(userId, content, token, imageBase64)
+            : await publishPost(userId, content, token, imageBase64);
 
-      if (!result.success) {
-        toast.dismiss(loadingToast);
-        toast.error(result.error || "Execution failed");
-        return;
-      }
+        if (!result.success) {
+          throw new Error(result.error || `Publishing to ${platform} failed.`);
+        }
 
-      await recordPublishedPost({
-        userId,
-        platform,
-        content,
-      });
+        await recordPublishedPost({ userId, platform, content });
+      }
 
       toast.dismiss(loadingToast);
-      toast.success(`Post published on ${platform}!`);
+      toast.success(`Post published on ${platformLabel}!`);
       router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
@@ -81,7 +83,7 @@ export default function CreatePage() {
   const handleSchedule = async (
     content: string,
     scheduledAt: number,
-    platform: Platform,
+    platforms: Platform[],
     _targetUrl?: string,
     image?: File,
   ) => {
@@ -90,8 +92,18 @@ export default function CreatePage() {
       return;
     }
 
+    if (platforms.length === 0) {
+      toast.error("Select at least one channel.");
+      return;
+    }
+    if (platforms.includes("Instagram") && !image) {
+      toast.error("Instagram scheduled posts require an image.");
+      return;
+    }
+
+    const platformLabel = formatPlatforms(platforms);
     setIsScheduling(true);
-    const loadingToast = toast.loading(`Scheduling on ${platform}...`);
+    const loadingToast = toast.loading(`Scheduling on ${platformLabel}...`);
 
     try {
       const token = (await getToken()) ?? undefined;
@@ -103,23 +115,19 @@ export default function CreatePage() {
         console.log(`📸 Image uploaded to temp: ${mediaUrl}`);
       }
 
-      if (platform === "Instagram" && !mediaUrl) {
-        toast.dismiss(loadingToast);
-        toast.error("Instagram scheduled posts require an image.");
-        return;
+      for (const platform of platforms) {
+        await schedulePost({
+          userId,
+          content,
+          scheduledAt,
+          platform: platform === "Instagram" ? "instagram" : "facebook",
+          mediaUrl,
+          token,
+        });
       }
 
-      await schedulePost({
-        userId,
-        content,
-        scheduledAt,
-        platform: platform === "Instagram" ? "instagram" : "facebook",
-        mediaUrl,
-        token,
-      });
-
       toast.dismiss(loadingToast);
-      toast.success(`Post scheduled on ${platform}!`);
+      toast.success(`Post scheduled on ${platformLabel}!`);
       router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
