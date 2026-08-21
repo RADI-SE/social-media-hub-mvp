@@ -14,6 +14,7 @@ import {
   TwitterIcon,
 } from "@/components/ui/ChannelIcons";
 import PostActions from "./PostActions";
+import PostUrlControl from "./PostUrlControl";
 
 type Post = Doc<"posts">;
 
@@ -53,6 +54,11 @@ const columns = column.columns([
   column.accessor("status", {
     header: "Status",
     cell: ({ getValue }) => <StatusPill value={getValue()} />,
+  }),
+  column.display({
+    id: "postUrl",
+    header: "Post URL",
+    cell: ({ row }) => <PostUrlControl post={row.original} />,
   }),
   column.accessor(
     (post) => post.scheduledAt ?? post.publishedAt ?? post.createdAt,
