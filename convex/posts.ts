@@ -30,7 +30,47 @@ export const recordPublishedPost = mutation({
     return id;
   },
 });
- 
+
+
+ // convex/posts.ts
+
+export const markAnalyticsCollected = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.postId, {
+      analyticsCollected: true,
+      lastAnalyticsScraped: Date.now(), // 👈 Update timestamp
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// ── Also add: Get posts that need analytics ──────────────────────
+export const getPostsWithoutAnalytics = query({
+  handler: async (ctx) => {
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_status", (q) => q.eq("status", "Published"))
+      .collect();
+
+    const postsWithoutAnalytics = [];
+    for (const post of posts) {
+      if (!post.postUrl) continue;
+
+      const analytics = await ctx.db
+        .query("analytics")
+        .withIndex("by_postId", (q) => q.eq("postId", post._id))
+        .first();
+
+      if (!analytics) {
+        postsWithoutAnalytics.push(post);
+      }
+    }
+
+    return postsWithoutAnalytics;
+  },
+});
+
 export const getPublishedPostsForUser = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -108,34 +148,40 @@ export const getScheduledItemsForUser = query({
   },
 });
 
+// export const getPostsWithoutAnalytics = query({
+//   handler: async (ctx) => {
+//     const posts = await ctx.db
+//       .query("posts")
+//       .withIndex("by_status", (q) => q.eq("status", "Published"))
+//       .collect();
 
-export const markItemProcessing = mutation({
-  args: { postId: v.id("posts") },
-  handler: async (ctx, args) => {
-    const post = await ctx.db.get(args.postId);
-    if (!post) throw new Error("Post not found");
-    if (post.status !== "Scheduled") {
-      return;
-    }
-    await ctx.db.patch(args.postId, {
-      status: "Processing",
-      updatedAt: Date.now(),
-    });
-  },
-});
+//     const postsWithoutAnalytics = [];
+//     for (const post of posts) {
+//       if (!post.postUrl) continue;
 
+//       const analytics = await ctx.db
+//         .query("analytics")
+//         .withIndex("by_postId", (q) => q.eq("postId", post._id))
+//         .first();
 
-export const markItemPublished = mutation({
-  args: { postId: v.id("posts") },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.postId, {
-      status: "Published",
-      publishedAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-  },
-});
+//       if (!analytics) {
+//         postsWithoutAnalytics.push(post);
+//       }
+//     }
 
+//     return postsWithoutAnalytics;
+//   },
+// });
+
+// export const markAnalyticsCollected = mutation({
+//   args: { postId: v.id("posts") },
+//   handler: async (ctx, args) => {
+//     await ctx.db.patch(args.postId, {
+//       analyticsCollected: true,
+//       updatedAt: Date.now(),
+//     });
+//   },
+// });
 
 export const markItemFailed = mutation({
   args: { postId: v.id("posts"), error: v.optional(v.string()) },
@@ -149,6 +195,24 @@ export const markItemFailed = mutation({
 });
 
 
+// convex/posts.ts
+
+export const markItemPublished = mutation({
+  args: {
+    postId: v.id("posts"), // 👈 This is the ID of the post to update
+    postUrl: v.optional(v.string()),
+    platformPostId: v.optional(v.string()), // 👈 Changed from 'postId' to 'platformPostId'
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.postId, {
+      status: "Published",
+      publishedAt: Date.now(),
+      updatedAt: Date.now(),
+      postUrl: args.postUrl,
+      platformPostId: args.platformPostId, // 👈 Store the platform's post ID
+    });
+  },
+});
 export const cancelScheduledItem = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -176,6 +240,38 @@ export const retryPost = mutation({
     await ctx.db.patch(args.postId, {
       status: "Scheduled",
       scheduledAt: Date.now() + 60000, 
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+
+export const markItemProcessing = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+    if (post.status !== "Scheduled") {
+      console.log(`⏭️ Post ${args.postId} already ${post.status}, skipping.`);
+      return;
+    }
+    await ctx.db.patch(args.postId, {
+      status: "Processing",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const updatePostUrl = mutation({
+  args: {
+    postId: v.id("posts"),
+    postUrl: v.string(),
+    platformPostId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.postId, {
+      postUrl: args.postUrl,
+      platformPostId: args.platformPostId,
       updatedAt: Date.now(),
     });
   },
