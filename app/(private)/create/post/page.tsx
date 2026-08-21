@@ -28,6 +28,7 @@ export default function CreatePage() {
   const [isScheduling, setIsScheduling] = useState(false);
 
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
+  const updatePostUrl = useMutation(api.posts.updatePostUrl);
 
   const handlePost = async (
     content: string,
@@ -56,6 +57,7 @@ export default function CreatePage() {
         imageBase64 = await fileToBase64(image);
       }
 
+      let hasMissingPostUrl = false;
       for (const platform of platforms) {
         const result =
           platform === "Instagram"
@@ -66,12 +68,31 @@ export default function CreatePage() {
           throw new Error(result.error || `Publishing to ${platform} failed.`);
         }
 
-        await recordPublishedPost({ userId, platform, content });
+        const postId = await recordPublishedPost({ userId, platform, content });
+        const postUrl =
+          typeof result.postUrl === "string" ? result.postUrl : undefined;
+        const platformPostId =
+          typeof result.platformPostId === "string"
+            ? result.platformPostId
+            : undefined;
+
+        if (postUrl) {
+          await updatePostUrl({ postId, postUrl, platformPostId });
+        } else {
+          hasMissingPostUrl = true;
+        }
       }
 
       toast.dismiss(loadingToast);
-      toast.success(`Post published on ${platformLabel}!`);
-      router.push("/home");
+      if (hasMissingPostUrl) {
+        toast.success(
+          `Published on ${platformLabel}. Add the missing post URL to enable analytics and classification.`,
+        );
+        router.push("/posts");
+      } else {
+        toast.success(`Post published on ${platformLabel}!`);
+        router.push("/home");
+      }
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error((error as Error).message);
