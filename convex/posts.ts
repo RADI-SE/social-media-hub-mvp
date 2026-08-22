@@ -276,3 +276,12 @@ export const updatePostUrl = mutation({
     });
   },
 });
+
+export const getPost = query({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.postId);
+  },
+});
+
+ 

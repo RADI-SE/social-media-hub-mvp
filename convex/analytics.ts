@@ -1,57 +1,22 @@
+// convex/analytics.ts
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-
-export const recordPostAnalytics = mutation({
-  args: {
-    postId: v.id("posts"),
-    userId: v.string(),
-    platform: v.union(
-      v.literal("Instagram"),
-      v.literal("Facebook"),
-      v.literal("LinkedIn"),
-      v.literal("TikTok"),
-      v.literal("X")
-    ),
-    reach: v.number(),
-    impressions: v.number(),
-    frequency: v.number(),
-    engagementRate: v.number(),
-    postClicks: v.number(),
-    profileVisits: v.number(),
-    followerGrowth: v.number(),
-    shareOfVoice: v.optional(v.number()),
-    likes: v.number(),
-    comments: v.number(),
-    shares: v.number(),
-    engagement: v.number(),
-    leads: v.optional(v.number()),
-    conversions: v.optional(v.number()),
-    revenue: v.optional(v.number()),
-    recordedAt: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const id = await ctx.db.insert("analytics", {
-      ...args,
-      createdAt: Date.now(),
-    });
-    return id;
-  },
-});
-
-
+// ── Get all analytics for a specific post ──────────────────────────
 export const getPostAnalytics = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const docs = await ctx.db
       .query("analytics")
       .withIndex("by_postId", (q) => q.eq("postId", args.postId))
       .order("desc")
       .collect();
+    return { data: docs, count: docs.length };
   },
 });
 
-export const getLatestPostAnalytics = query({
+// ── Get the most recent analytics entry for a post ─────────────────
+export const getLatestForPost = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -62,211 +27,203 @@ export const getLatestPostAnalytics = query({
   },
 });
 
-export const getAnalyticsOverview = query({
+// ── Record a new analytics entry ────────────────────────────────────
+export const recordAnalytics = mutation({
+  args: {
+    postId: v.id("posts"),
+    userId: v.string(),
+    platform: v.string(),
+    likes: v.number(),
+    comments: v.number(),
+    shares: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const id = await ctx.db.insert("analytics", {
+      postId: args.postId,
+      userId: args.userId,
+      platform: args.platform,
+      likes: args.likes,
+      comments: args.comments,
+      shares: args.shares ?? 0,
+      scrapedAt: Date.now(),
+      createdAt: Date.now(),
+    });
+    return id;
+  },
+});
+
+// ── Dashboard overview (totals, averages, latest) ──────────────────
+export const getOverview = query({
   args: {
     userId: v.string(),
-    platform: v.optional(
-      v.union(
-        v.literal("Instagram"),
-        v.literal("Facebook"),
-        v.literal("LinkedIn"),
-        v.literal("TikTok"),
-        v.literal("X")
-      )
-    ),
+    platform: v.optional(v.string()),
     days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const days = args.days || 30;
-    const startDate = Date.now() - days * 24 * 60 * 60 * 1000;
+    const { userId, platform, days } = args;
+    const since = days ? Date.now() - days * 24 * 60 * 60 * 1000 : 0;
 
-    let query = ctx.db
-      .query("posts")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId));
+    // Get all analytics for this user within the time window
+    const analytics = await ctx.db
+      .query("analytics")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.gte(q.field("scrapedAt"), since))
+      .collect();
 
-    if (args.platform) {
-      query = query.filter((q) => q.eq(q.field("platform"), args.platform));
+    // Filter by platform if provided
+    const filtered = platform
+      ? analytics.filter((a) => a.platform === platform)
+      : analytics;
+
+    // Compute totals
+    let totalLikes = 0,
+      totalComments = 0,
+      totalShares = 0;
+    for (const a of filtered) {
+      totalLikes += a.likes;
+      totalComments += a.comments;
+      totalShares += a.shares ?? 0;
     }
 
-    const posts = await query.collect();
+    const count = filtered.length;
+    const avgLikes = count ? Math.round(totalLikes / count) : 0;
+    const avgComments = count ? Math.round(totalComments / count) : 0;
+    const avgShares = count ? Math.round(totalShares / count) : 0;
 
-    let totalReach = 0;
-    let totalImpressions = 0;
-    let totalEngagement = 0;
-    let totalLikes = 0;
-    let totalComments = 0;
-    let totalShares = 0;
-    let totalPosts = 0;
-    let totalEngagementRate = 0;
-    let postsWithAnalytics = 0;
-
-    for (const post of posts) {
-      if (post.status !== "Published") continue;
-      totalPosts++;
-
-      const analytics = await ctx.db
-        .query("analytics")
-        .withIndex("by_postId", (q) => q.eq("postId", post._id))
-        .first();
-
-      if (analytics) {
-        postsWithAnalytics++;
-        totalReach += analytics.reach || 0;
-        totalImpressions += analytics.impressions || 0;
-        totalLikes += analytics.likes || 0;
-        totalComments += analytics.comments || 0;
-        totalShares += analytics.shares || 0;
-        totalEngagementRate += analytics.engagementRate || 0;
-      }
-    }
-
-    totalEngagement = totalLikes + totalComments + totalShares;
+    // Get the most recent scraped entry (overall)
+    const latest = filtered.length ? filtered.reduce((a, b) => (a.scrapedAt > b.scrapedAt ? a : b)) : null;
 
     return {
-      totalPosts,
-      postsWithAnalytics,
-      totalReach,
-      totalImpressions,
-      totalEngagement,
       totalLikes,
       totalComments,
       totalShares,
-      avgEngagementRate: postsWithAnalytics > 0
-        ? totalEngagementRate / postsWithAnalytics
-        : 0,
+      avgLikes,
+      avgComments,
+      avgShares,
+      totalPosts: count,
+      latest,
     };
   },
 });
 
-
-export const getAnalyticsTimeline = query({
+// ── Timeline data for charts ──────────────────────────────────────
+export const getTimeline = query({
   args: {
     userId: v.string(),
-    platform: v.optional(
-      v.union(
-        v.literal("Instagram"),
-        v.literal("Facebook"),
-        v.literal("LinkedIn"),
-        v.literal("TikTok"),
-        v.literal("X")
-      )
-    ),
+    platform: v.optional(v.string()),
     days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const days = args.days || 30;
-    const startDate = Date.now() - days * 24 * 60 * 60 * 1000;
+    const { userId, platform, days } = args;
+    const since = days ? Date.now() - days * 24 * 60 * 60 * 1000 : 0;
 
-    let query = ctx.db
-      .query("posts")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId));
+    const analytics = await ctx.db
+      .query("analytics")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.gte(q.field("scrapedAt"), since))
+      .collect();
 
-    if (args.platform) {
-      query = query.filter((q) => q.eq(q.field("platform"), args.platform));
+    const filtered = platform
+      ? analytics.filter((a) => a.platform === platform)
+      : analytics;
+
+    // Group by day
+    const map = new Map<string, { likes: number; comments: number; shares: number }>();
+    for (const a of filtered) {
+      const date = new Date(a.scrapedAt).toISOString().split("T")[0];
+      const existing = map.get(date) || { likes: 0, comments: 0, shares: 0 };
+      existing.likes += a.likes;
+      existing.comments += a.comments;
+      existing.shares += a.shares ?? 0;
+      map.set(date, existing);
     }
 
-    const posts = await query.collect();
+    const timeline = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, metrics]) => ({ date, ...metrics }));
 
-    interface TimelineEntry {
-      date: string;
-      reach: number;
-      impressions: number;
-      engagement: number;
-      likes: number;
-      comments: number;
-      shares: number;
-      posts: number;
-    }
-
-    const timeline: Record<string, TimelineEntry> = {};
-
-    for (const post of posts) {
-      if (post.status !== "Published") continue;
-
-      const analytics = await ctx.db
-        .query("analytics")
-        .withIndex("by_postId", (q) => q.eq("postId", post._id))
-        .first();
-
-      if (analytics) {
-        const date = new Date(post.publishedAt || post.createdAt);
-        const day = date.toISOString().split('T')[0];
-
-        if (!timeline[day]) {
-          timeline[day] = {
-            date: day,
-            reach: 0,
-            impressions: 0,
-            engagement: 0,
-            likes: 0,
-            comments: 0,
-            shares: 0,
-            posts: 0,
-          };
-        }
-
-        timeline[day].reach += analytics.reach || 0;
-        timeline[day].impressions += analytics.impressions || 0;
-        timeline[day].likes += analytics.likes || 0;
-        timeline[day].comments += analytics.comments || 0;
-        timeline[day].shares += analytics.shares || 0;
-        timeline[day].engagement += (analytics.likes || 0) + (analytics.comments || 0) + (analytics.shares || 0);
-        timeline[day].posts++;
-      }
-    }
-
-    return Object.values(timeline).sort((a, b) => a.date.localeCompare(b.date));
+    return timeline;
   },
 });
 
-
+// ── Top posts by total engagement ──────────────────────────────────
 export const getTopPosts = query({
   args: {
     userId: v.string(),
+    platform: v.optional(v.string()),
     limit: v.optional(v.number()),
-    platform: v.optional(
-      v.union(
-        v.literal("Instagram"),
-        v.literal("Facebook"),
-        v.literal("LinkedIn"),
-        v.literal("TikTok"),
-        v.literal("X")
-      )
-    ),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit || 10;
+    const { userId, platform, limit = 10 } = args;
 
-    let query = ctx.db
+    // Get all posts for this user (with analytics)
+    const posts = await ctx.db
       .query("posts")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "Published"));
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("status"), "Published"))
+      .collect();
 
-    if (args.platform) {
-      query = query.filter((q) => q.eq(q.field("platform"), args.platform));
-    }
+    const platformFiltered = platform
+      ? posts.filter((p) => p.platform === platform)
+      : posts;
 
-    const posts = await query.collect();
-
-    const postsWithAnalytics = [];
-
-    for (const post of posts) {
-      const analytics = await ctx.db
+    // For each post, get its latest analytics
+    const result = [];
+    for (const post of platformFiltered) {
+      if (!post.postUrl) continue;
+      const latest = await ctx.db
         .query("analytics")
         .withIndex("by_postId", (q) => q.eq("postId", post._id))
+        .order("desc")
         .first();
-
-      if (analytics) {
-        postsWithAnalytics.push({
-          ...post,
-          analytics: analytics,
-          totalEngagement: (analytics.likes || 0) + (analytics.comments || 0) + (analytics.shares || 0),
+      if (latest) {
+        const engagement = latest.likes + latest.comments + (latest.shares ?? 0);
+        result.push({
+          post,
+          analytics: latest,
+          engagement,
         });
       }
     }
 
-    return postsWithAnalytics
-      .sort((a, b) => b.totalEngagement - a.totalEngagement)
-      .slice(0, limit);
+    // Sort by engagement descending and limit
+    result.sort((a, b) => b.engagement - a.engagement);
+    return result.slice(0, limit);
+  },
+});
+
+// ── Get all posts with their latest analytics (for list view) ────
+export const getPostsWithAnalytics = query({
+  args: {
+    userId: v.string(),
+    platform: v.optional(v.string()),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { userId, platform, status } = args;
+
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    let filtered = posts;
+    if (platform) filtered = filtered.filter((p) => p.platform === platform);
+    if (status) filtered = filtered.filter((p) => p.status === status);
+
+    const result = [];
+    for (const post of filtered) {
+      const latest = await ctx.db
+        .query("analytics")
+        .withIndex("by_postId", (q) => q.eq("postId", post._id))
+        .order("desc")
+        .first();
+      result.push({ post, analytics: latest || null });
+    }
+
+    // Sort by publishedAt descending (newest first)
+    result.sort((a, b) => (b.post.publishedAt || 0) - (a.post.publishedAt || 0));
+
+    return { data: result, count: result.length };
   },
 });

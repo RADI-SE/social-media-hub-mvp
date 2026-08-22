@@ -60,36 +60,17 @@ export default defineSchema({
   analytics: defineTable({
     postId: v.id("posts"),
     userId: v.string(),
-    platform: v.union(
-      v.literal("Instagram"),
-      v.literal("Facebook"),
-      v.literal("LinkedIn"),
-      v.literal("TikTok"),
-      v.literal("X")
-    ),
-    reach: v.number(),
-    impressions: v.number(),
-    frequency: v.number(),
-    engagementRate: v.number(),
-    postClicks: v.number(),
-    profileVisits: v.number(),
-    followerGrowth: v.number(),
-    shareOfVoice: v.optional(v.number()),
+    platform: v.string(),
     likes: v.number(),
     comments: v.number(),
     shares: v.number(),
-    engagement: v.number(),
-    leads: v.optional(v.number()),
-    conversions: v.optional(v.number()),
-    revenue: v.optional(v.number()),
-    recordedAt: v.number(),
+    scrapedAt: v.number(),
     createdAt: v.number(),
   })
     .index("by_postId", ["postId"])
     .index("by_userId", ["userId"])
-    .index("by_platform", ["platform"])
-    .index("by_recordedAt", ["recordedAt"]),
-
+    .index("by_postId_scrapedAt", ["postId", "scrapedAt"]),
+    
   comments: defineTable({
     userId: v.string(),
     targetUrl: v.string(),
