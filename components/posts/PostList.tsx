@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -24,7 +25,8 @@ const platformIcons = {
   X: TwitterIcon,
 };
 
-const column = createColumnHelper<typeof dataTableFeatures, Post>();
+// ── Fix: use Post as the row type directly ──────────────────────────
+const column = createColumnHelper<Post>();
 
 const columns = column.columns([
   column.accessor("platform", {
@@ -80,6 +82,12 @@ const columns = column.columns([
 ]);
 
 export default function PostList({ posts }: { posts: Post[] }) {
+  const router = useRouter();
+
+  const handleRowClick = (post: Post) => {
+    router.push(`/posts/${post._id}/analytics`);
+  };
+
   return (
     <>
       <PageHeader
@@ -103,6 +111,7 @@ export default function PostList({ posts }: { posts: Post[] }) {
           emptyMessage="No posts yet."
           initialSorting={[{ id: "date", desc: true }]}
           getRowId={(post) => post._id}
+          onRowClick={handleRowClick} // 👈 row click navigation
         />
       </section>
     </>

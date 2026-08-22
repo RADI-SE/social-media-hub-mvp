@@ -249,3 +249,19 @@ export async function uploadTempImage(
   const data = await response.json();
   return data.path;
 }
+
+
+export async function fetchPostAnalytics(postId: string, userId: string, token?: string) {
+  const url = `${SCRIPT_URL}/api/analytics/refresh/${postId}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: buildHeaders(token),
+    body: JSON.stringify({ userId }), // 👈 send userId in body
+    cache: 'no-cache',
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Failed to fetch analytics: ${response.status}`);
+  }
+  return response.json();
+}
