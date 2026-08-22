@@ -1,4 +1,5 @@
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useTranslations } from "next-intl";
 
 type Value =
   | Doc<"posts">["status"]
@@ -22,11 +23,27 @@ const styles: Record<Value, string> = {
 };
 
 export default function StatusPill({ value }: { value: Value }) {
+  const t = useTranslations("statusValues");
+  const labels: Record<Value, string> = {
+    Draft: t("Draft"),
+    Scheduled: t("Scheduled"),
+    Published: t("Published"),
+    Failed: t("Failed"),
+    Lead: t("Lead"),
+    Question: t("Question"),
+    Complaint: t("Complaint"),
+    Feedback: t("Feedback"),
+    Engagement: t("Engagement"),
+    Other: t("Other"),
+    Todo: t("Todo"),
+    InProgress: t("InProgress"),
+    Completed: t("Completed"),
+  };
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${styles[value]}`}
     >
-      {value === "InProgress" ? "In progress" : value}
+      {labels[value]}
     </span>
   );
 }

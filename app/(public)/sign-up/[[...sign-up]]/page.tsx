@@ -1,10 +1,16 @@
 import { SignUp } from "@clerk/nextjs";
 import AuthShell from "@/components/auth/AuthShell";
 import { clerkAppearance } from "@/components/auth/clerkAppearance";
+import { getTranslations } from "next-intl/server";
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const t = await getTranslations("auth");
   return (
-    <AuthShell eyebrow="Get started" title="Create your workspace account" description="Set up your account, then connect the social profiles you manage.">
+    <AuthShell
+      eyebrow={t("eyebrow")}
+      title={t("signUpTitle")}
+      description={t("signUpDescription")}
+    >
       <SignUp
         appearance={clerkAppearance}
         signInUrl="/sign-in"

@@ -28,11 +28,17 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 },
+      );
     }
 
     const { currentPassword, newPassword } = body;
-    if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
+    if (
+      typeof currentPassword !== "string" ||
+      typeof newPassword !== "string"
+    ) {
       return NextResponse.json(
         { error: "Missing current or new password" },
         { status: 400 },
@@ -48,7 +54,10 @@ export async function POST(req: Request) {
 
     if (newPassword === currentPassword) {
       return NextResponse.json(
-        { error: "Your new password must be different from the current password" },
+        {
+          error:
+            "Your new password must be different from the current password",
+        },
         { status: 400 },
       );
     }
@@ -60,7 +69,10 @@ export async function POST(req: Request) {
       !/\d/.test(newPassword)
     ) {
       return NextResponse.json(
-        { error: "Use at least 8 characters with uppercase, lowercase, and a number" },
+        {
+          error:
+            "Use at least 8 characters with uppercase, lowercase, and a number",
+        },
         { status: 400 },
       );
     }
@@ -85,7 +97,10 @@ export async function POST(req: Request) {
 
     if (code === "incorrect_password" || code === "form_password_incorrect") {
       return NextResponse.json(
-        { error: "Current password is incorrect", code: "form_password_incorrect" },
+        {
+          error: "Current password is incorrect",
+          code: "form_password_incorrect",
+        },
         { status: 400 },
       );
     }
@@ -99,7 +114,10 @@ export async function POST(req: Request) {
 
     if (code?.includes("password")) {
       return NextResponse.json(
-        { error: "The new password does not meet the security requirements", code },
+        {
+          error: "The new password does not meet the security requirements",
+          code,
+        },
         { status: 422 },
       );
     }

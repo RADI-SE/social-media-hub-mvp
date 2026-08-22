@@ -1,19 +1,22 @@
 "use client";
 
 import { useMemo } from "react";
-import { format } from "date-fns";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import StatusPill from "@/components/hub/StatusPill";
 import DataTable, { dataTableFeatures } from "@/components/ui/DataTable";
 import ConvertToTaskButton from "./ConvertToTaskButton";
+import { FacebookIcon, InstagramIcon } from "@/components/ui/ChannelIcons";
+import { useFormatter, useTranslations } from "next-intl";
 
 type Comment = Doc<"comments">;
+type Post = Doc<"posts">;
 const column = createColumnHelper<typeof dataTableFeatures, Comment>();
 
 interface CommentTableProps {
   comments: Comment[];
+  posts: Post[];
   tasks: Doc<"followUpTasks">[];
   pendingId: Id<"comments"> | null;
   onConvert: (comment: Comment) => void;
@@ -22,16 +25,44 @@ interface CommentTableProps {
 
 export default function CommentTable({
   comments,
+  posts,
   tasks,
   pendingId,
   onConvert,
   onDelete,
 }: CommentTableProps) {
+  const t = useTranslations("comments");
+  const common = useTranslations("common");
+  const formatter = useFormatter();
+  const postsById = useMemo(
+    () => new Map(posts.map((post) => [post._id, post])),
+    [posts],
+  );
+  const postsByUrl = useMemo(
+    () =>
+      new Map(
+        posts
+          .filter((post) => post.postUrl)
+          .map((post) => [post.postUrl as string, post]),
+      ),
+    [posts],
+  );
   const columns = useMemo(
     () =>
       column.columns([
+        column.display({
+          id: "sourcePost",
+          header: t("sourcePost"),
+          cell: ({ row }) => {
+            const comment = row.original;
+            const post = comment.postId
+              ? postsById.get(comment.postId)
+              : postsByUrl.get(comment.targetUrl);
+            return <PostContext comment={comment} post={post} />;
+          },
+        }),
         column.accessor("authorName", {
-          header: "Author",
+          header: t("author"),
           cell: ({ row }) => (
             <div className="flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#c4ffe6] to-[#7590ff] text-xs font-bold text-[#09276b]">
@@ -44,7 +75,7 @@ export default function CommentTable({
           ),
         }),
         column.accessor("content", {
-          header: "Comment",
+          header: t("comment"),
           cell: ({ getValue }) => (
             <p
               className="max-w-md truncate text-sm text-slate-600"
@@ -55,26 +86,29 @@ export default function CommentTable({
           ),
         }),
         column.accessor("classification", {
-          header: "Classification",
+          header: t("classification"),
           cell: ({ getValue }) => <StatusPill value={getValue()} />,
         }),
         column.accessor("status", {
-          header: "Status",
+          header: common("status"),
           cell: ({ getValue }) => (
             <StatusPill value={getValue() ?? "Published"} />
           ),
         }),
         column.accessor("createdAt", {
-          header: "Created",
+          header: common("created"),
           cell: ({ getValue }) => (
             <span className="whitespace-nowrap text-sm text-slate-500">
-              {format(getValue(), "MMM d, yyyy · h:mm a")}
+              {formatter.dateTime(getValue(), {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
             </span>
           ),
         }),
         column.display({
           id: "actions",
-          header: "Actions",
+          header: common("actions"),
           cell: ({ row }) => (
             <CommentActions
               comment={row.original}
@@ -88,17 +122,54 @@ export default function CommentTable({
           ),
         }),
       ]),
-    [onConvert, onDelete, pendingId, tasks],
+    [
+      common,
+      formatter,
+      onConvert,
+      onDelete,
+      pendingId,
+      postsById,
+      postsByUrl,
+      t,
+      tasks,
+    ],
   );
 
   return (
     <DataTable
       columns={columns}
       data={comments}
-      emptyMessage="No comments yet."
+      emptyMessage={t("emptyTitle")}
       initialSorting={[{ id: "createdAt", desc: true }]}
       getRowId={(comment) => comment._id}
     />
+  );
+}
+
+function PostContext({ comment, post }: { comment: Comment; post?: Post }) {
+  const t = useTranslations("comments");
+  const platform =
+    post?.platform ??
+    (comment.platform === "instagram" ? "Instagram" : "Facebook");
+  const PlatformIcon = platform === "Instagram" ? InstagramIcon : FacebookIcon;
+  const postId = post?._id ?? comment.postId;
+
+  return (
+    <div className="max-w-56 text-left">
+      <p
+        className="mb-1 truncate font-mono text-[0.62rem] text-slate-400"
+        title={postId}
+      >
+        {postId ? t("postId", { id: postId }) : t("postNotLinked")}
+      </p>
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#3556d9]">
+        <PlatformIcon className="h-3.5 w-3.5 flex-none" />
+        {platform}
+      </div>
+      <p className="mt-1 truncate text-xs text-slate-500" title={post?.content}>
+        {post?.content ?? t("postContentUnavailable")}
+      </p>
+    </div>
   );
 }
 
@@ -115,6 +186,7 @@ function CommentActions({
   onConvert: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("comments");
   return (
     <div className="flex items-center justify-end gap-2">
       {comment.targetUrl && (
@@ -122,7 +194,7 @@ function CommentActions({
           href={comment.targetUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label="View source post"
+          aria-label={t("viewSource")}
           className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-[#2854dc]"
         >
           <ExternalLink size={15} />
@@ -131,7 +203,7 @@ function CommentActions({
       <button
         type="button"
         onClick={onDelete}
-        aria-label="Delete comment"
+        aria-label={t("deleteComment")}
         className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
       >
         <Trash2 size={15} />

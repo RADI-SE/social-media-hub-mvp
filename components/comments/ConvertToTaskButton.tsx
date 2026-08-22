@@ -1,4 +1,5 @@
 import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function ConvertToTaskButton({
   converted,
@@ -9,6 +10,7 @@ export default function ConvertToTaskButton({
   loading: boolean;
   onConvert: () => void;
 }) {
+  const t = useTranslations("comments");
   return (
     <button
       type="button"
@@ -19,16 +21,16 @@ export default function ConvertToTaskButton({
       {loading ? (
         <>
           <Loader2 size={16} className="animate-spin" />
-          Creating…
+          {t("convert")}…
         </>
       ) : converted ? (
         <>
           <Check size={16} />
-          Task created
+          {t("converted")}
         </>
       ) : (
         <>
-          Convert to task
+          {t("convert")}
           <ArrowRight size={16} />
         </>
       )}

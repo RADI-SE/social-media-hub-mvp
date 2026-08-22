@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { KeyRound, Loader2, ShieldCheck, X } from "lucide-react";
 import PageHeader from "@/components/hub/PageHeader";
+import { useTranslations } from "next-intl";
 import { ProfilePhoto } from "../ui/profile/ProfilePhoto";
 import { ProfileField } from "../ui/profile/ProfileField";
 import { DangerZone } from "../ui/profile/DangerZone";
@@ -29,6 +30,7 @@ async function responseData(
 }
 
 export function ProfileSettings() {
+  const t = useTranslations("profile");
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const [nameDraft, setNameDraft] = useState<string | null>(null);
@@ -278,9 +280,9 @@ export function ProfileSettings() {
   return (
     <>
       <PageHeader
-        eyebrow="Account"
-        title="Profile settings"
-        description="Manage the identity and security details connected to your Spiders AI workspace."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
       />
       <div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
         <aside className="glass-card h-fit rounded-3xl p-6 sm:p-8">
@@ -300,7 +302,7 @@ export function ProfileSettings() {
           {isUploadingImage && (
             <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
               <Loader2 size={14} className="animate-spin" />
-              Updating photo…
+              {t("updatingPhoto")}
             </p>
           )}
           {imageError && (
@@ -319,25 +321,24 @@ export function ProfileSettings() {
               onClick={removeImage}
               className="mt-4 text-xs font-semibold text-rose-600 hover:underline"
             >
-              Remove photo
+              {t("removePhoto")}
             </button>
           )}
           <div className="mt-8 rounded-2xl bg-blue-50/70 p-4">
             <div className="flex items-center gap-2 text-[#173b9a]">
               <ShieldCheck size={16} />
               <p className="text-xs font-bold uppercase tracking-[0.12em]">
-                Secured by Clerk
+                {t("securedBy")}
               </p>
             </div>
             <p className="mt-2 text-xs leading-5 text-slate-500">
-              Sensitive changes require your current password and are processed
-              through protected API routes.
+              {t("securityDescription")}
             </p>
           </div>
         </aside>
         <section className="space-y-4">
           <ProfileField
-            label="Full name"
+            label={t("fullName")}
             value={shownName}
             onChange={(event) => {
               setNameDraft(event.target.value);
@@ -349,10 +350,10 @@ export function ProfileSettings() {
             isSaving={savingField === "name"}
             error={nameError}
             success={nameSuccess}
-            helper="2–60 characters. Arabic and English names are supported."
+            helper={t("nameHelp")}
           />
           <ProfileField
-            label="Email"
+            label={t("email")}
             type="email"
             value={shownEmail}
             onChange={(event) => {
@@ -369,7 +370,7 @@ export function ProfileSettings() {
             error={emailError}
             success={emailSuccess}
             warning
-            helper="Changing email requires your current password."
+            helper={t("emailHelp")}
           />
           <div className="rounded-2xl border border-white/90 bg-white/65 p-5">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -377,12 +378,11 @@ export function ProfileSettings() {
                 <div className="flex items-center gap-2">
                   <KeyRound size={17} className="text-[#3556d9]" />
                   <h2 className="text-sm font-semibold text-[#071e55]">
-                    Password
+                    {t("passwordTitle")}
                   </h2>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
-                  Use at least 8 characters with uppercase, lowercase, and a
-                  number.
+                  {t("passwordHelp")}
                 </p>
               </div>
               <button
@@ -390,7 +390,7 @@ export function ProfileSettings() {
                 onClick={() => setShowPasswordDialog(true)}
                 className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-[#173b9a] hover:bg-blue-100"
               >
-                Change password
+                {t("changePassword")}
               </button>
             </div>
           </div>
@@ -406,9 +406,9 @@ export function ProfileSettings() {
         onSubmit={confirmEmailChange}
         isLoading={savingField === "email"}
         error={emailDialogError}
-        title="Confirm email change"
-        description={`Enter your current password to change your email to ${shownEmail}.`}
-        submitLabel="Update email"
+        title={t("confirmEmailTitle")}
+        description={t("confirmEmailDescription", { email: shownEmail })}
+        submitLabel={t("updateEmail")}
         mode="email"
       />
       <PasswordConfirmDialog
@@ -422,9 +422,9 @@ export function ProfileSettings() {
         isLoading={isUpdatingPassword}
         error={passwordError}
         success={passwordSuccess}
-        title="Change password"
-        description="Confirm your current password and choose a secure new one."
-        submitLabel="Update password"
+        title={t("changePassword")}
+        description={t("passwordDescription")}
+        submitLabel={t("updatePassword")}
         mode="password"
       />
       {showDeleteDialog && (

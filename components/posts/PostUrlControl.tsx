@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import {
   BarChart3,
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/ChannelIcons";
 
 type Post = Doc<"posts">;
+
+const POST_URL_GRACE_PERIOD_MS = 2 * 60 * 1000;
 
 const platformHosts: Partial<Record<Post["platform"], string[]>> = {
   Facebook: ["facebook.com", "fb.watch"],
@@ -57,6 +59,20 @@ export default function PostUrlControl({ post }: { post: Post }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const urlFallbackAt =
+    (post.publishedAt ?? post.updatedAt) + POST_URL_GRACE_PERIOD_MS;
+
+  useEffect(() => {
+    if (post.postUrl || post.status !== "Published" || now >= urlFallbackAt) {
+      return;
+    }
+    const timeout = window.setTimeout(
+      () => setNow(Date.now()),
+      Math.max(0, urlFallbackAt - now),
+    );
+    return () => window.clearTimeout(timeout);
+  }, [now, post.postUrl, post.status, urlFallbackAt]);
 
   if (post.postUrl) {
     return (
@@ -74,6 +90,15 @@ export default function PostUrlControl({ post }: { post: Post }) {
 
   if (post.status !== "Published") {
     return <span className="text-sm text-slate-400">Not available yet</span>;
+  }
+
+  if (now < urlFallbackAt) {
+    return (
+      <span className="inline-flex items-center gap-2 whitespace-nowrap text-sm font-medium text-slate-500">
+        <Loader2 size={14} className="animate-spin text-[#486bf5]" />
+        Preparing link...
+      </span>
+    );
   }
 
   const close = () => {

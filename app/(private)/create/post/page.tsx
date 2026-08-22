@@ -15,10 +15,12 @@ import {
 } from "@/lib/api";
 import { fileToBase64 } from "@/lib/image";
 import { type Platform } from "@/types/social-account";
+import { useTranslations } from "next-intl";
 
 const formatPlatforms = (platforms: Platform[]) => platforms.join(" & ");
 
 export default function CreatePage() {
+  const t = useTranslations("composer");
   const router = useRouter();
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -29,8 +31,6 @@ export default function CreatePage() {
 
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
 
-
-
   const handlePost = async (
     content: string,
     platforms: Platform[],
@@ -38,18 +38,20 @@ export default function CreatePage() {
     image?: File,
   ) => {
     if (!userId) {
-      toast.error("You must be logged in.");
+      toast.error(t("loginRequired"));
       return;
     }
 
     if (platforms.length === 0) {
-      toast.error("Select at least one channel.");
+      toast.error(t("channelRequired"));
       return;
     }
 
     const platformLabel = formatPlatforms(platforms);
     setIsPosting(true);
-    const loadingToast = toast.loading(`Publishing to ${platformLabel}...`);
+    const loadingToast = toast.loading(
+      t("publishing", { platforms: platformLabel }),
+    );
 
     try {
       const token = (await getToken()) ?? undefined;
@@ -58,22 +60,22 @@ export default function CreatePage() {
         imageBase64 = await fileToBase64(image);
       }
 
-   for (const platform of platforms) {
-  const result =
-    platform === "Instagram"
-      ? await publishInstagramPost(userId, content, token, imageBase64)
-      : await publishPost(userId, content, token, imageBase64);
+      for (const platform of platforms) {
+        const result =
+          platform === "Instagram"
+            ? await publishInstagramPost(userId, content, token, imageBase64)
+            : await publishPost(userId, content, token, imageBase64);
 
-  if (!result.success) {
-    throw new Error(result.error || `Publishing to ${platform} failed.`);
-  }
- 
-  if (!result.postId) {
-    await recordPublishedPost({ userId, platform, content });
-  }
-}
+        if (!result.success) {
+          throw new Error(result.error || t("publishFailed", { platform }));
+        }
+
+        if (!result.postId) {
+          await recordPublishedPost({ userId, platform, content });
+        }
+      }
       toast.dismiss(loadingToast);
-      toast.success(`Post published on ${platformLabel}!`);
+      toast.success(t("published", { platforms: platformLabel }));
       router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
@@ -91,22 +93,24 @@ export default function CreatePage() {
     image?: File,
   ) => {
     if (!userId) {
-      toast.error("You must be logged in.");
+      toast.error(t("loginRequired"));
       return;
     }
 
     if (platforms.length === 0) {
-      toast.error("Select at least one channel.");
+      toast.error(t("channelRequired"));
       return;
     }
     if (platforms.includes("Instagram") && !image) {
-      toast.error("Instagram scheduled posts require an image.");
+      toast.error(t("instagramImageRequired"));
       return;
     }
 
     const platformLabel = formatPlatforms(platforms);
     setIsScheduling(true);
-    const loadingToast = toast.loading(`Scheduling on ${platformLabel}...`);
+    const loadingToast = toast.loading(
+      t("schedulingOn", { platforms: platformLabel }),
+    );
 
     try {
       const token = (await getToken()) ?? undefined;
@@ -130,7 +134,7 @@ export default function CreatePage() {
       }
 
       toast.dismiss(loadingToast);
-      toast.success(`Post scheduled on ${platformLabel}!`);
+      toast.success(t("scheduledOn", { platforms: platformLabel }));
       router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);

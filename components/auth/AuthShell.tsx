@@ -7,13 +7,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import BrandMark from "@/components/hub/BrandMark";
-
-const features = [
-  { icon: CalendarCheck2, label: "Plan and schedule posts" },
-  { icon: Sparkles, label: "Generate bilingual captions" },
-  { icon: MessageCircleMore, label: "Classify customer comments" },
-  { icon: BarChart3, label: "Review mock performance" },
-];
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 export default function AuthShell({
   eyebrow,
@@ -26,6 +21,13 @@ export default function AuthShell({
   description: string;
   children: ReactNode;
 }) {
+  const t = useTranslations("auth");
+  const features = [
+    { icon: CalendarCheck2, label: t("plan") },
+    { icon: Sparkles, label: t("captions") },
+    { icon: MessageCircleMore, label: t("classify") },
+    { icon: BarChart3, label: t("review") },
+  ];
   return (
     <main className="soft-grid min-h-screen p-4 sm:p-6">
       <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl overflow-hidden rounded-[2rem] border border-white/85 bg-white/52 shadow-[0_30px_90px_rgba(20,52,120,0.13)] backdrop-blur-2xl sm:min-h-[calc(100vh-3rem)] lg:grid-cols-[0.92fr_1.08fr]">
@@ -36,16 +38,13 @@ export default function AuthShell({
           </div>
           <div className="relative z-10 my-auto max-w-lg py-12">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-100">
-              Social media marketing hub
+              {t("eyebrow")}
             </p>
             <h1 className="mt-5 text-5xl font-semibold leading-[1.02] tracking-[-0.055em]">
-              One sign-in.
-              <br />
-              Every customer signal.
+              {t("title")}
             </h1>
             <p className="mt-6 max-w-md text-base leading-7 text-blue-100">
-              A focused workspace for content, monitoring, analytics, and lead
-              follow-up.
+              {t("description")}
             </p>
             <div className="mt-10 grid grid-cols-2 gap-3">
               {features.map(({ icon: Icon, label }) => (
@@ -66,6 +65,9 @@ export default function AuthShell({
 
         <section className="flex items-center justify-center px-5 py-10 sm:px-10 lg:px-16">
           <div className="w-full max-w-md">
+            <div className="mb-4 flex justify-end">
+              <LanguageSwitcher compact />
+            </div>
             <div className="mb-8 lg:hidden">
               <BrandMark href="/" />
             </div>
@@ -85,7 +87,7 @@ export default function AuthShell({
               href="/"
               className="mt-6 block text-center text-xs font-semibold text-slate-400 hover:text-[#173b9a]"
             >
-              ← Back to Spiders AI Hub
+              {t("back")}
             </Link>
           </div>
         </section>

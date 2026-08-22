@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { WandSparkles, ArrowLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface AIAssistantPanelProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function AIAssistantPanel({
   channelIcon,
   mode = "post",
 }: AIAssistantPanelProps) {
+  const t = useTranslations("composer");
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedOptions, setGeneratedOptions] = useState<string[]>([]);
@@ -50,12 +52,12 @@ export function AIAssistantPanel({
       const data = await response.json();
       if (data.success && data.captions && data.captions.length > 0) {
         setGeneratedOptions(data.captions);
-        toast.success(`${data.captions.length} options generated!`);
+        toast.success(t("optionsGenerated", { count: data.captions.length }));
       } else {
-        toast.error(data.error || "Failed to generate.");
+        toast.error(data.error || t("generateFailed"));
       }
     } catch (error) {
-      toast.error("Failed to generate.");
+      toast.error(t("generateFailed"));
       console.error(error);
     } finally {
       setIsGenerating(false);
@@ -64,7 +66,9 @@ export function AIAssistantPanel({
 
   const handleApply = (content: string) => {
     onApplyContent(content);
-    toast.success(mode === "comment" ? "Reply inserted!" : "Caption inserted!");
+    toast.success(
+      mode === "comment" ? t("replyInserted") : t("captionInserted"),
+    );
     setGeneratedOptions([]);
     setPrompt("");
   };
@@ -81,7 +85,7 @@ export function AIAssistantPanel({
         </button>
         <div className="flex items-center gap-1.5">
           <WandSparkles size={16} className="text-purple-600" />
-          <h4 className="text-sm font-semibold text-gray-800">AI Assistant</h4>
+          <h4 className="text-sm font-semibold text-gray-800">{t("ai")}</h4>
         </div>
         <div className="text-gray-400">{channelIcon}</div>
       </div>
@@ -89,17 +93,21 @@ export function AIAssistantPanel({
       <div className="flex-1 overflow-y-auto p-4">
         {/* Input form */}
         <form onSubmit={handleGenerate} className="space-y-3 mb-4">
-          <label htmlFor="prompt" className="text-sm font-medium text-gray-700 block">
-            What do you want to write about?
+          <label
+            htmlFor="prompt"
+            className="text-sm font-medium text-gray-700 block"
+          >
+            {t("aiPrompt")}
           </label>
           <textarea
             id="prompt"
             name="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder={mode === "comment" 
-              ? "Eg. Reply to a customer asking about shipping..." 
-              : "Eg. Promote my photography course..."
+            placeholder={
+              mode === "comment"
+                ? t("aiCommentPlaceholder")
+                : t("aiPostPlaceholder")
             }
             rows={4}
             className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -110,7 +118,7 @@ export function AIAssistantPanel({
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <WandSparkles size={16} strokeWidth={2.2} />
-            {isGenerating ? "Generating..." : "Generate 3 Options"}
+            {isGenerating ? t("generating") : t("generateOptions")}
           </button>
         </form>
 
@@ -118,7 +126,7 @@ export function AIAssistantPanel({
         {generatedOptions.length > 0 && (
           <div className="space-y-3">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Choose an option:
+              {t("chooseOption")}
             </p>
             {generatedOptions.map((option, index) => (
               <div
@@ -131,7 +139,7 @@ export function AIAssistantPanel({
                   className="text-xs text-purple-600 hover:underline font-medium flex items-center gap-1"
                 >
                   <Sparkles size={12} />
-                  Apply
+                  {t("apply")}
                 </button>
               </div>
             ))}

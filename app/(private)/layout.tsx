@@ -3,7 +3,11 @@ import Sidebar from "@/components/layout/Sidebar";
 import BrandMark from "@/components/hub/BrandMark";
 import UserInitializer from "@/components/UserInitializer";
 
-export default async function PrivateLayout({ children }: { children: React.ReactNode }) {
+export default async function PrivateLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   await auth.protect();
 
   return (
@@ -14,9 +18,10 @@ export default async function PrivateLayout({ children }: { children: React.Reac
         <div className="border-b border-white/70 bg-white/55 px-5 py-4 backdrop-blur-xl md:hidden">
           <BrandMark />
         </div>
-        <div className="mx-auto w-full max-w-[94rem] p-5 sm:p-8 lg:p-10">{children}</div>
+        <div className="mx-auto w-full max-w-[94rem] p-5 sm:p-8 lg:p-10">
+          {children}
+        </div>
       </main>
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
 
 interface DialogHeaderProps {
   title: string;
@@ -8,11 +8,18 @@ interface DialogHeaderProps {
   onClose: () => void;
 }
 
-export function DialogHeader({ title, description, onClose }: DialogHeaderProps) {
+export function DialogHeader({
+  title,
+  description,
+  onClose,
+}: DialogHeaderProps) {
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
       <div>
-        <h3 id="connect-dialog-title" className="text-lg font-semibold text-gray-900">
+        <h3
+          id="connect-dialog-title"
+          className="text-lg font-semibold text-gray-900"
+        >
           {title}
         </h3>
         <p id="connect-dialog-desc" className="text-sm text-gray-500">

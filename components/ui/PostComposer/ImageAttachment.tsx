@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { ImagePlus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ImageAttachmentProps {
   file: File | null;
@@ -16,6 +17,7 @@ export function ImageAttachment({
   onSelect,
   onRemove,
 }: ImageAttachmentProps) {
+  const t = useTranslations("composer");
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -38,7 +40,7 @@ export function ImageAttachment({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
-            alt="Selected post attachment"
+            alt={t("selectedAttachment")}
             className="h-full w-full object-contain"
           />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 text-white">
@@ -47,7 +49,7 @@ export function ImageAttachment({
               type="button"
               onClick={onRemove}
               className="grid h-8 w-8 flex-none place-items-center rounded-full bg-black/45 transition-colors hover:bg-black/65"
-              aria-label="Remove image"
+              aria-label={t("removeImage")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -64,10 +66,10 @@ export function ImageAttachment({
           </span>
           <span>
             <span className="block font-medium text-gray-700">
-              Add an image
+              {t("addImage")}
             </span>
             <span className="block text-xs text-gray-400">
-              Choose an image to include with this post
+              {t("imageDescription")}
             </span>
           </span>
         </button>

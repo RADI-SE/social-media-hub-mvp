@@ -1,6 +1,7 @@
 import Link from "next/link";
 import StatusPill from "@/components/hub/StatusPill";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useTranslations } from "next-intl";
 
 export function RecentPosts({
   posts,
@@ -9,28 +10,29 @@ export function RecentPosts({
   posts: Doc<"posts">[];
   accounts: Doc<"socialAccounts">[];
 }) {
+  const t = useTranslations("dashboard");
   return (
     <article className="glass-card overflow-hidden rounded-3xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#3556d9]">
-            Content flow
+            {t("eyebrow")}
           </p>
           <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em]">
-            Recent posts
+            {t("recentPosts")}
           </h2>
         </div>
         <Link
           href="/posts"
           className="text-sm font-semibold text-[#2854dc] hover:text-[#173b9a]"
         >
-          View all
+          {t("viewAll")}
         </Link>
       </div>
       <div className="divide-y divide-slate-100">
         {!posts.length ? (
           <p className="px-6 py-10 text-center text-sm text-slate-400">
-            No posts yet.
+            {t("noPosts")}
           </p>
         ) : (
           posts.map((post) => {

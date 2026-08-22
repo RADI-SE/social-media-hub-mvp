@@ -9,7 +9,11 @@ interface ChannelCardProps {
   disabled?: boolean; // ✅ new prop
 }
 
-export function ChannelCard({ channel, onClick, disabled = false }: ChannelCardProps) {
+export function ChannelCard({
+  channel,
+  onClick,
+  disabled = false,
+}: ChannelCardProps) {
   const Icon = channel.icon;
 
   const handleClick = () => {
@@ -31,7 +35,9 @@ export function ChannelCard({ channel, onClick, disabled = false }: ChannelCardP
       }}
     >
       {Icon ? (
-        <Icon className={`w-10 h-10 ${disabled ? "text-gray-400" : "text-gray-700"}`} />
+        <Icon
+          className={`w-10 h-10 ${disabled ? "text-gray-400" : "text-gray-700"}`}
+        />
       ) : (
         <div className="w-10 h-10 flex items-center justify-center text-gray-400">
           <svg viewBox="0 0 24 24" fill="none" className="w-10 h-10">
@@ -48,11 +54,15 @@ export function ChannelCard({ channel, onClick, disabled = false }: ChannelCardP
         </div>
       )}
 
-      <h4 className={`text-sm font-medium mt-1 ${disabled ? "text-gray-500" : "text-gray-800"}`}>
+      <h4
+        className={`text-sm font-medium mt-1 ${disabled ? "text-gray-500" : "text-gray-800"}`}
+      >
         {channel.name}
       </h4>
       {channel.subtitle && (
-        <span className={`text-xs text-center ${disabled ? "text-gray-400" : "text-gray-500"}`}>
+        <span
+          className={`text-xs text-center ${disabled ? "text-gray-400" : "text-gray-500"}`}
+        >
           {channel.subtitle}
         </span>
       )}
