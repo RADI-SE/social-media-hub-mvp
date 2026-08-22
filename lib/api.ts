@@ -140,7 +140,10 @@ export async function publishPost(
       imageBase64,
     }),
   });
-  if (!response.ok) throw new Error(`Failed to publish post: ${response.statusText}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error || `Failed to publish post: ${response.statusText}`);
+  }
   return response.json();
 }
 
