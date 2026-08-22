@@ -28,7 +28,8 @@ export default function CreatePage() {
   const [isScheduling, setIsScheduling] = useState(false);
 
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
-  const updatePostUrl = useMutation(api.posts.updatePostUrl);
+
+
 
   const handlePost = async (
     content: string,
@@ -57,42 +58,23 @@ export default function CreatePage() {
         imageBase64 = await fileToBase64(image);
       }
 
-      let hasMissingPostUrl = false;
-      for (const platform of platforms) {
-        const result =
-          platform === "Instagram"
-            ? await publishInstagramPost(userId, content, token, imageBase64)
-            : await publishPost(userId, content, token, imageBase64);
+   for (const platform of platforms) {
+  const result =
+    platform === "Instagram"
+      ? await publishInstagramPost(userId, content, token, imageBase64)
+      : await publishPost(userId, content, token, imageBase64);
 
-        if (!result.success) {
-          throw new Error(result.error || `Publishing to ${platform} failed.`);
-        }
-
-        const postId = await recordPublishedPost({ userId, platform, content });
-        const postUrl =
-          typeof result.postUrl === "string" ? result.postUrl : undefined;
-        const platformPostId =
-          typeof result.platformPostId === "string"
-            ? result.platformPostId
-            : undefined;
-
-        if (postUrl) {
-          await updatePostUrl({ postId, postUrl, platformPostId });
-        } else {
-          hasMissingPostUrl = true;
-        }
-      }
-
+  if (!result.success) {
+    throw new Error(result.error || `Publishing to ${platform} failed.`);
+  }
+ 
+  if (!result.postId) {
+    await recordPublishedPost({ userId, platform, content });
+  }
+}
       toast.dismiss(loadingToast);
-      if (hasMissingPostUrl) {
-        toast.success(
-          `Published on ${platformLabel}. Add the missing post URL to enable analytics and classification.`,
-        );
-        router.push("/posts");
-      } else {
-        toast.success(`Post published on ${platformLabel}!`);
-        router.push("/home");
-      }
+      toast.success(`Post published on ${platformLabel}!`);
+      router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error((error as Error).message);
