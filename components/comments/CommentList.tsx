@@ -9,15 +9,19 @@ import PageHeader from "@/components/hub/PageHeader";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import CommentTable from "./CommentTable";
+import { useTranslations } from "next-intl";
 
 type Comment = Doc<"comments">;
 const EMPTY_TASKS: Doc<"followUpTasks">[] = [];
 
 export default function CommentList({
   comments,
+  posts,
 }: {
   comments: Doc<"comments">[];
+  posts: Doc<"posts">[];
 }) {
+  const t = useTranslations("comments");
   const user = useQuery(api.users.current);
   const tasks = useQuery(
     api.followUpTasks.getTasksForUser,
@@ -30,7 +34,7 @@ export default function CommentList({
   const handleConvert = useCallback(
     async (comment: Comment) => {
       if (!user) {
-        toast.error("Your account is still loading. Try again.");
+        toast.error(t("accountLoading"));
         return;
       }
       setPendingId(comment._id);
@@ -38,67 +42,66 @@ export default function CommentList({
         await createTask({
           commentId: comment._id,
           userId: user._id,
-          title: `Follow up with ${comment.authorName}`,
+          title: `${t("convert")}: ${comment.authorName}`,
         });
-        toast.success("Follow-up task created");
+        toast.success(t("taskCreated"));
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Could not create task",
-        );
+        toast.error(error instanceof Error ? error.message : t("taskFailed"));
       } finally {
         setPendingId(null);
       }
     },
-    [createTask, user],
+    [createTask, t, user],
   );
 
   const handleDelete = useCallback(
     async (commentId: Id<"comments">) => {
       try {
         await deleteComment({ commentId });
-        toast.success("Comment deleted");
+        toast.success(t("deleted"));
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Could not delete comment",
-        );
+        toast.error(error instanceof Error ? error.message : t("deleteFailed"));
       }
     },
-    [deleteComment],
+    [deleteComment, t],
   );
 
   return (
     <>
       <PageHeader
-        eyebrow="Engagement"
-        title="Comments"
-        description="Review stored comments, classifications, and turn a customer signal into follow-up work."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
         action={
           <Link
             href="/comments/post"
             className="inline-flex items-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white"
           >
             <Plus size={16} />
-            New comment
+            {t("newComment")}
           </Link>
         }
       />
       {user === undefined || (user && tasks === undefined) ? (
         <div className="glass-card flex min-h-64 items-center justify-center rounded-3xl text-sm text-slate-500">
           <Loader2 size={18} className="mr-2 animate-spin" />
-          Loading comments…
+          {t("loading")}
         </div>
       ) : !comments.length ? (
         <div className="glass-card flex min-h-64 flex-col items-center justify-center rounded-3xl px-6 text-center">
           <MessageCircleMore className="text-[#3556d9]" />
-          <h2 className="mt-4 font-semibold text-[#071e55]">No comments yet</h2>
+          <h2 className="mt-4 font-semibold text-[#071e55]">
+            {t("emptyTitle")}
+          </h2>
           <p className="mt-2 max-w-md text-sm text-slate-500">
-            Stored comments will appear here after they are posted or imported.
+            {t("emptyDescription")}
           </p>
         </div>
       ) : (
         <section className="glass-card overflow-hidden rounded-3xl">
           <CommentTable
             comments={comments}
+            posts={posts}
             tasks={tasks ?? EMPTY_TASKS}
             pendingId={pendingId}
             onConvert={handleConvert}

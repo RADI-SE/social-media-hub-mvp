@@ -5,4 +5,3 @@ export default async function LandingPage() {
   const { userId } = await auth();
   return <LandingExperience signedIn={Boolean(userId)} />;
 }
-

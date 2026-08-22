@@ -1,10 +1,16 @@
 import { SignIn } from "@clerk/nextjs";
 import AuthShell from "@/components/auth/AuthShell";
 import { clerkAppearance } from "@/components/auth/clerkAppearance";
+import { getTranslations } from "next-intl/server";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const t = await getTranslations("auth");
   return (
-    <AuthShell eyebrow="Welcome back" title="Sign in to your workspace" description="Continue managing content, conversations, and follow-up work.">
+    <AuthShell
+      eyebrow={t("eyebrow")}
+      title={t("signInTitle")}
+      description={t("signInDescription")}
+    >
       <SignIn
         appearance={clerkAppearance}
         signUpUrl="/sign-up"

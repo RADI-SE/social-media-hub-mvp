@@ -1,8 +1,10 @@
 "use client";
 
 import { WandSparkles, ScanEye, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface HeaderProps {
+  mode?: "post" | "comment";
   previewOpen: boolean;
   onTogglePreview: () => void;
   aiOpen: boolean;
@@ -11,17 +13,22 @@ interface HeaderProps {
 }
 
 export function PostComposerHeader({
+  mode = "post",
   previewOpen,
   onTogglePreview,
   aiOpen,
   onToggleAI,
   onClose,
 }: HeaderProps) {
+  const t = useTranslations("composer");
+  const common = useTranslations("common");
   return (
     <header className="flex flex-none items-center justify-between border-b border-gray-200 px-6 py-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">Create Post</h3>
-        <p className="text-sm text-gray-500">Create and edit posts</p>
+        <h3 className="text-lg font-semibold text-gray-900">
+          {t(mode === "post" ? "createPost" : "createComment")}
+        </h3>
+        <p className="text-sm text-gray-500">{t("editorDescription")}</p>
       </div>
       <div className="flex items-center gap-3">
         <button
@@ -33,7 +40,7 @@ export function PostComposerHeader({
           }`}
         >
           <WandSparkles size={16} strokeWidth={2.2} />
-          <span>AI Assistant</span>
+          <span>{t("ai")}</span>
         </button>
 
         <button
@@ -45,10 +52,11 @@ export function PostComposerHeader({
           }`}
         >
           <ScanEye size={16} strokeWidth={2.2} />
-          <span>Preview</span>
+          <span>{t("preview")}</span>
         </button>
 
         <button
+          aria-label={common("close")}
           onClick={onClose}
           className="p-1 text-gray-400 hover:text-gray-600 rounded"
         >

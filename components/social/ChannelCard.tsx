@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 interface ChannelCardProps {
   icon: ReactNode;
@@ -21,13 +21,15 @@ export function ChannelCard({
   isConnected,
   isLoading,
   onDisconnect,
-  disconnectLabel = 'Disconnect',
-  statusLabel = 'Connected',
+  disconnectLabel = "Disconnect",
+  statusLabel = "Connected",
   children,
 }: ChannelCardProps) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/80 dark:hover:border-gray-600">
-      <div className={`absolute inset-x-0 top-0 h-0.5 ${gradient} opacity-90`} />
+      <div
+        className={`absolute inset-x-0 top-0 h-0.5 ${gradient} opacity-90`}
+      />
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3.5">
@@ -35,8 +37,12 @@ export function ChannelCard({
             {icon}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{name}</p>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              {name}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {description}
+            </p>
           </div>
         </div>
 
@@ -54,14 +60,16 @@ export function ChannelCard({
       <div className="my-4 border-t border-gray-100 dark:border-gray-700/70" />
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400 dark:text-gray-500">{children || 'Ready'}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">
+          {children || "Ready"}
+        </span>
         {isConnected && (
           <button
             onClick={onDisconnect}
             disabled={isLoading}
             className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 disabled:opacity-50"
           >
-            {isLoading ? 'Disconnecting...' : disconnectLabel}
+            {isLoading ? "Disconnecting..." : disconnectLabel}
           </button>
         )}
       </div>

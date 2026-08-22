@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SCRIPT_SERVER_URL = process.env.NEXT_PUBLIC_SCRIPT_SERVER_URL || "http://localhost:3000";
+const SCRIPT_SERVER_URL =
+  process.env.NEXT_PUBLIC_SCRIPT_SERVER_URL || "http://localhost:3000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 export async function GET(request: NextRequest) {
@@ -14,7 +15,6 @@ export async function GET(request: NextRequest) {
   if (authHeader) {
     headers["Authorization"] = authHeader;
   }
-
 
   const response = await fetch(url, { headers });
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const authHeader = request.headers.get("authorization");
 
-   const headers: HeadersInit = {
+  const headers: HeadersInit = {
     "Content-Type": "application/json",
     "x-api-key": API_KEY as string,
   };
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     headers,
     body,
   });
- 
+
   return new NextResponse(response.body, {
     status: response.status,
     headers: response.headers,

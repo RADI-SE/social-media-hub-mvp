@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useClerk } from "@clerk/nextjs";
 import { ArrowRight, LogOut, MoveUpRight, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function SessionActions({
   signedIn,
@@ -12,6 +13,7 @@ export default function SessionActions({
   signedIn: boolean;
   placement: "nav" | "hero";
 }) {
+  const t = useTranslations("landing");
   const { signOut } = useClerk();
   const [leaving, setLeaving] = useState<"sign-in" | "sign-up" | null>(null);
 
@@ -31,10 +33,10 @@ export default function SessionActions({
             className="landing-nav-secondary inline-flex items-center gap-1.5 disabled:opacity-60"
           >
             <LogOut size={14} />
-            {leaving ? "Signing out…" : "Switch account"}
+            {leaving ? t("signingOut") : t("switchAccount")}
           </button>
           <Link href="/home" className="landing-nav-primary">
-            Dashboard <MoveUpRight size={14} />
+            {t("dashboard")} <MoveUpRight size={14} />
           </Link>
         </div>
       );
@@ -42,10 +44,10 @@ export default function SessionActions({
     return (
       <div className="flex items-center gap-2">
         <Link href="/sign-in" className="landing-nav-secondary">
-          Sign in
+          {t("signIn")}
         </Link>
         <Link href="/sign-up" className="landing-nav-primary">
-          Sign up <ArrowRight size={15} />
+          {t("signUp")} <ArrowRight size={15} />
         </Link>
       </div>
     );
@@ -56,7 +58,7 @@ export default function SessionActions({
       <div className="mt-9">
         <div className="flex flex-wrap items-center gap-3">
           <Link href="/home" className="landing-hero-primary">
-            Open dashboard <MoveUpRight size={17} />
+            {t("openDashboard")} <MoveUpRight size={17} />
           </Link>
           <button
             type="button"
@@ -65,7 +67,7 @@ export default function SessionActions({
             className="landing-hero-secondary inline-flex items-center gap-2 disabled:opacity-60"
           >
             <LogOut size={16} />
-            {leaving === "sign-in" ? "Signing out…" : "Sign out & test sign in"}
+            {leaving === "sign-in" ? t("signingOut") : t("testSignIn")}
           </button>
         </div>
         <button
@@ -75,9 +77,7 @@ export default function SessionActions({
           className="landing-dashboard-link mt-2"
         >
           <UserPlus size={16} />
-          {leaving === "sign-up"
-            ? "Signing out…"
-            : "Sign out & create another account"}
+          {leaving === "sign-up" ? t("signingOut") : t("anotherAccount")}
         </button>
       </div>
     );
@@ -86,10 +86,10 @@ export default function SessionActions({
   return (
     <div className="mt-9 flex flex-wrap items-center gap-3">
       <Link href="/sign-up" className="landing-hero-primary">
-        Sign up <ArrowRight size={17} />
+        {t("signUp")} <ArrowRight size={17} />
       </Link>
       <Link href="/sign-in" className="landing-hero-secondary">
-        Sign in
+        {t("signIn")}
       </Link>
     </div>
   );

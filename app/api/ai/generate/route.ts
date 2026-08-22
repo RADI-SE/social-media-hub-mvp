@@ -8,19 +8,19 @@ const ai = new GoogleGenAI({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { 
-      topic, 
-      tone = "engaging", 
-      platform = "social media", 
+    const {
+      topic,
+      tone = "engaging",
+      platform = "social media",
       length = "short",
       type = "post",
-      variations = 3 
+      variations = 3,
     } = body;
 
     if (!topic) {
       return NextResponse.json(
         { error: "Missing topic field" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,16 +46,16 @@ Do not include any extra text, introductions, or conclusions. Only the numbered 
     if (!text) {
       throw new Error("No content generated.");
     }
- 
+
     const captions: string[] = [];
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     for (const line of lines) {
       const match = line.match(/^\s*\d+\.\s*(.*)/);
       if (match && match[1]) {
         captions.push(match[1].trim());
       }
     }
- 
+
     if (captions.length < variations) {
       const parts = text.split(/\n\s*\n/);
       if (parts.length >= variations) {
@@ -65,7 +65,7 @@ Do not include any extra text, introductions, or conclusions. Only the numbered 
         }
       }
     }
- 
+
     if (captions.length === 0) {
       captions.push(text);
     }
@@ -75,7 +75,7 @@ Do not include any extra text, introductions, or conclusions. Only the numbered 
     console.error("AI generation error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to generate content" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

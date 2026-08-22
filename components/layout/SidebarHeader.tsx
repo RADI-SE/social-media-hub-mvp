@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,45 +11,48 @@ import {
   LayoutDashboard,
   MessageCircleMore,
   Calendar,
-  Plus
+  Plus,
 } from "lucide-react";
-
-const navItems = [
-  { name: "Overview", href: "/home", icon: LayoutDashboard },
-  { name: "Calendar", href: "/schedule", icon: CalendarDays },
-  { name: "Posts", href: "/posts", icon: FileText },
-  { name: "Comments", href: "/comments", icon: MessageCircleMore },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Tasks", href: "/tasks", icon: CheckSquare2 },
-];
-
-const dropdownItems = [
-  { name: 'New Post', href: '/create/post' },
-  { name: 'Add Comment', href: '/comments/post' },
-  { name: 'New Schedule', href: '/schedule' },
-];
+import { useTranslations } from "next-intl";
 
 export default function SidebarHeader() {
+  const t = useTranslations("sidebar");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const navItems = [
+    { name: t("overview"), href: "/home", icon: LayoutDashboard },
+    { name: t("calendar"), href: "/schedule", icon: CalendarDays },
+    { name: t("posts"), href: "/posts", icon: FileText },
+    { name: t("comments"), href: "/comments", icon: MessageCircleMore },
+    { name: t("analytics"), href: "/analytics", icon: BarChart3 },
+    { name: t("tasks"), href: "/tasks", icon: CheckSquare2 },
+  ];
+  const dropdownItems = [
+    { name: t("newPost"), href: "/create/post", post: true },
+    { name: t("addComment"), href: "/comments/post", post: false },
+    { name: t("newSchedule"), href: "/schedule", post: false },
+  ];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <nav className="mt-8" aria-label="Main navigation">
+    <nav className="mt-8" aria-label={t("workspace")}>
       <p className="px-3 text-[0.63rem] font-bold uppercase tracking-[0.2em] text-slate-400">
-        Workspace
+        {t("workspace")}
       </p>
-      <div className="relative inline-block text-left" ref={dropdownRef}>
+      <div className="relative inline-block text-start" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
@@ -58,20 +61,24 @@ export default function SidebarHeader() {
           aria-expanded={isOpen}
         >
           <Plus size={16} strokeWidth={2.2} />
-          New
+          {t("new")}
         </button>
 
         {isOpen && (
-          <div className="absolute left-0 mt-2 w-48 origin-top-left bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+          <div className="absolute start-0 z-50 mt-2 w-48 origin-top rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
             <div className="py-1">
-              {dropdownItems.map(({ name, href }) => (
+              {dropdownItems.map(({ name, href, post }) => (
                 <Link
                   key={name}
                   href={href}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center gap-2 px-4 py-2 text-start text-sm text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsOpen(false)}
                 >
-                  {name === 'New Post' ? <Plus size={16} strokeWidth={2.2} /> : <Calendar size={16} strokeWidth={2.2} />}
+                  {post ? (
+                    <Plus size={16} strokeWidth={2.2} />
+                  ) : (
+                    <Calendar size={16} strokeWidth={2.2} />
+                  )}
                   {name}
                 </Link>
               ))}

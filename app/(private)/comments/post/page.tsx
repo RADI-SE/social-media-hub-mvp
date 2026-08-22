@@ -10,16 +10,18 @@ import {
   scheduleComment,
 } from "@/lib/api";
 import { type Platform } from "@/types/social-account";
+import { useTranslations } from "next-intl";
 
 export default function CommentPage() {
+  const t = useTranslations("comments");
   const workflow = useComposerWorkflow();
   const createComment = useMutation(api.comments.createComment);
   const authorName =
     workflow.user?.fullName || workflow.user?.username || "You";
 
   const validate = (platform?: Platform, targetUrl?: string) => {
-    if (!platform) return "Select the channel that contains the post.";
-    if (!targetUrl) return "A post URL is required.";
+    if (!platform) return t("selectChannel");
+    if (!targetUrl) return t("urlRequired");
     try {
       const hostname = new URL(targetUrl).hostname.replace(/^www\./, "");
       const matchesPlatform =
@@ -29,10 +31,10 @@ export default function CommentPage() {
             hostname.endsWith(".facebook.com") ||
             hostname === "fb.watch";
       if (!matchesPlatform) {
-        return `Enter a ${platform} post URL for the selected channel.`;
+        return t("wrongPlatformUrl", { platform });
       }
     } catch {
-      return "Invalid URL. Please enter a valid post URL.";
+      return t("invalidUrl");
     }
   };
 
@@ -48,8 +50,8 @@ export default function CommentPage() {
     await workflow.run(
       "post",
       {
-        loading: `Posting comment on ${platform}...`,
-        success: `Comment posted on ${platform}!`,
+        loading: t("posting", { platform }),
+        success: t("posted", { platform }),
       },
       async () => {
         const token = (await workflow.getToken()) ?? undefined;
@@ -83,8 +85,8 @@ export default function CommentPage() {
     await workflow.run(
       "schedule",
       {
-        loading: `Scheduling comment on ${platform}...`,
-        success: `Comment scheduled on ${platform}!`,
+        loading: t("scheduling", { platform }),
+        success: t("scheduled", { platform }),
       },
       async () => {
         const token = (await workflow.getToken()) ?? undefined;

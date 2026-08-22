@@ -6,7 +6,7 @@ import { ChannelCard } from "./ChannelCard";
 interface DialogBodyProps {
   channels: Channel[];
   onChannelClick: (id: string) => void;
-  connectedChannels?: string[];  
+  connectedChannels?: string[];
 }
 
 export function DialogBody({

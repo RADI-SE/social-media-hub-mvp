@@ -19,6 +19,7 @@ import {
 } from "@/lib/mockAnalytics";
 import Chart from "./Chart";
 import PostAnalytics from "./PostAnalytics";
+import { useFormatter, useTranslations } from "next-intl";
 
 export type AnalyticsRow = {
   post: Doc<"posts">;
@@ -28,6 +29,7 @@ export type AnalyticsRow = {
 const emptyTotals = { impressions: 0, likes: 0, comments: 0, leads: 0 };
 
 export default function AnalyticsOverview() {
+  const t = useTranslations("analytics");
   const { user, isLoaded } = useUser();
   const posts = useQuery(
     api.posts.getPublishedPostsForUser,
@@ -37,26 +39,26 @@ export default function AnalyticsOverview() {
   return (
     <>
       <PageHeader
-        eyebrow="Performance"
-        title="Analytics"
-        description="Mock performance metrics generated for your real published posts."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
       />
       <div className="mb-5 flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs font-medium text-amber-800">
         <TrendingUp size={16} />
-        Mock analytics only · No live Facebook metrics are being fetched.
+        {t("mockNotice")}
       </div>
 
       {!isLoaded || (user && posts === undefined) ? (
         <LoadingState />
       ) : !user ? (
         <MessageState
-          title="Account data is unavailable"
-          description="Sign in again to load your analytics."
+          title={t("unavailableTitle")}
+          description={t("unavailableDescription")}
         />
       ) : !posts?.length ? (
         <MessageState
-          title="No published posts yet"
-          description="Publish a post to generate its mock analytics view."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
         />
       ) : (
         <AnalyticsContent posts={posts} />
@@ -66,6 +68,9 @@ export default function AnalyticsOverview() {
 }
 
 function AnalyticsContent({ posts }: { posts: Doc<"posts">[] }) {
+  const t = useTranslations("analytics");
+  const common = useTranslations("common");
+  const format = useFormatter();
   const rows: AnalyticsRow[] = mockAnalyticsForPosts(posts);
   const totals = rows.reduce((sum, row) => {
     return {
@@ -77,25 +82,25 @@ function AnalyticsContent({ posts }: { posts: Doc<"posts">[] }) {
   }, emptyTotals);
   const metrics = [
     {
-      label: "Impressions",
+      label: t("impressions"),
       value: totals.impressions,
       icon: Eye,
       color: "text-blue-700 bg-blue-50",
     },
     {
-      label: "Likes",
+      label: t("likes"),
       value: totals.likes,
       icon: Heart,
       color: "text-rose-600 bg-rose-50",
     },
     {
-      label: "Comments",
+      label: t("comments"),
       value: totals.comments,
       icon: MessageCircleMore,
       color: "text-cyan-700 bg-cyan-50",
     },
     {
-      label: "Leads",
+      label: t("leads"),
       value: totals.leads,
       icon: Users,
       color: "text-violet-700 bg-violet-50",
@@ -114,11 +119,11 @@ function AnalyticsContent({ posts }: { posts: Doc<"posts">[] }) {
                 <Icon size={18} />
               </span>
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.15em] text-slate-400">
-                Total
+                {common("total")}
               </p>
             </div>
             <p className="mt-5 text-3xl font-semibold tracking-[-0.04em]">
-              {value.toLocaleString()}
+              {format.number(value)}
             </p>
             <p className="mt-1 text-sm text-slate-500">{label}</p>
           </article>
@@ -131,10 +136,11 @@ function AnalyticsContent({ posts }: { posts: Doc<"posts">[] }) {
 }
 
 function LoadingState() {
+  const t = useTranslations("analytics");
   return (
     <div className="glass-card flex min-h-64 items-center justify-center rounded-3xl text-sm text-slate-500">
       <Loader2 size={18} className="mr-2 animate-spin" />
-      Loading analytics…
+      {t("loading")}
     </div>
   );
 }

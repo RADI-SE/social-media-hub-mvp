@@ -2,6 +2,7 @@
 
 import { FacebookIcon, InstagramIcon } from "../ChannelIcons";
 import { type Platform } from "@/types/social-account";
+import { useTranslations } from "next-intl";
 
 export type ComposerChannelId = "facebook" | "instagram";
 
@@ -38,10 +39,11 @@ export function ChannelSelector({
   onToggle,
   multiple = true,
 }: ChannelSelectorProps) {
+  const t = useTranslations("composer");
   return (
     <section className="mb-6 border-b border-gray-100 pb-4">
       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-        Select {multiple ? "Channels" : "Channel"}
+        {t(multiple ? "selectChannels" : "selectChannel")}
       </h4>
       <div className="flex flex-wrap gap-2">
         {COMPOSER_CHANNELS.map(({ id, label, icon: Icon }) => (

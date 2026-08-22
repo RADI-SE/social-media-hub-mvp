@@ -17,8 +17,10 @@ import type { Doc } from "@/convex/_generated/dataModel";
 import { mockAnalyticsForPosts } from "@/lib/mockAnalytics";
 import { DashboardStats } from "./DashboardStats";
 import { RecentPosts } from "./RecentPosts";
+import { useFormatter, useTranslations } from "next-intl";
 
 export function HomeDashboard() {
+  const t = useTranslations("dashboard");
   const { user, isLoaded } = useUser();
   const convexUser = useQuery(api.users.current);
   const posts = useQuery(
@@ -44,14 +46,14 @@ export function HomeDashboard() {
     return (
       <div className="glass-card flex min-h-64 items-center justify-center rounded-3xl text-sm text-slate-500">
         <Loader2 size={18} className="mr-2 animate-spin" />
-        Loading workspace…
+        {t("loading")}
       </div>
     );
   }
   if (!user || !convexUser) {
     return (
       <div className="glass-card rounded-3xl p-8 text-center text-sm text-slate-500">
-        Sign in again to load your workspace.
+        {t("signIn")}
       </div>
     );
   }
@@ -74,6 +76,8 @@ function DashboardContent({
   accounts: Doc<"socialAccounts">[];
   tasks: Doc<"followUpTasks">[];
 }) {
+  const t = useTranslations("dashboard");
+  const format = useFormatter();
   const published = useMemo(
     () => posts.filter((post) => post.status === "Published"),
     [posts],
@@ -93,15 +97,15 @@ function DashboardContent({
   return (
     <>
       <PageHeader
-        eyebrow="Dashboard"
-        title="From content to follow-up."
-        description="A live publishing and follow-up overview with clearly labeled mock performance metrics."
+        eyebrow={t("eyebrow")}
+        title={t("headline")}
+        description={t("description")}
         action={
           <Link
             href="/create/post"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 hover:-translate-y-0.5 hover:bg-[#0f2e7d]"
           >
-            Create post <ArrowRight size={16} />
+            {t("createPost")} <ArrowRight size={16} />
           </Link>
         }
       />
@@ -115,22 +119,22 @@ function DashboardContent({
                 <CalendarClock size={20} />
               </span>
               <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.13em]">
-                Next up
+                {t("nextUp")}
               </span>
             </div>
             <p className="mt-8 text-xs font-semibold text-blue-100">
-              {nextPost?.platform ?? "No scheduled platform"}
+              {nextPost?.platform ?? t("noPlatform")}
             </p>
             <p className="mt-2 text-lg font-semibold leading-7">
-              {nextPost?.content ?? "No scheduled post"}
+              {nextPost?.content ?? t("noPost")}
             </p>
             <p className="mt-5 text-xs text-blue-100">
               {nextPost?.scheduledAt
-                ? new Intl.DateTimeFormat("en", {
+                ? format.dateTime(nextPost.scheduledAt, {
                     dateStyle: "medium",
                     timeStyle: "short",
-                  }).format(new Date(nextPost.scheduledAt))
-                : "Schedule a post to see it here"}
+                  })
+                : t("scheduleHint")}
             </p>
           </article>
           <article className="glass-card rounded-3xl p-6">
@@ -140,15 +144,15 @@ function DashboardContent({
               </span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  Lead-to-task
+                  {t("leadToTask")}
                 </p>
-                <h2 className="text-lg font-semibold">Workflow health</h2>
+                <h2 className="text-lg font-semibold">{t("workflowHealth")}</h2>
               </div>
             </div>
             <div className="mt-5 flex items-center justify-between rounded-2xl bg-white/70 p-4">
               <div>
                 <p className="text-2xl font-semibold">{tasks.length}</p>
-                <p className="text-xs text-slate-500">Follow-up tasks</p>
+                <p className="text-xs text-slate-500">{t("followUpTasks")}</p>
               </div>
               <CheckCircle2 className="text-emerald-500" size={26} />
             </div>

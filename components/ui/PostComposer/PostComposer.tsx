@@ -14,6 +14,7 @@ import { AIAssistantPanel } from "./AIAssistantPanel";
 import { CalendarIcon, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { type Platform } from "@/types/social-account";
+import { useTranslations } from "next-intl";
 
 interface PostComposerProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ export function PostComposer({
   mode = "post",
   initialTargetUrl = "",
 }: PostComposerProps) {
+  const t = useTranslations("composer");
   const [selectedChannels, setSelectedChannels] = useState<ComposerChannelId[]>(
     [],
   );
@@ -67,7 +69,7 @@ export function PostComposer({
   );
   const channel = selectedChannelConfigs[0];
   const ChannelIcon = channel?.icon;
-  const targetChannelName = channel?.label ?? "Social media";
+  const targetChannelName = channel?.label ?? t("socialMedia");
   const targetUrlPlaceholder =
     channel?.id === "instagram"
       ? "https://www.instagram.com/p/..."
@@ -147,12 +149,12 @@ export function PostComposer({
 
   const handleSchedule = () => {
     if (!scheduledTime) {
-      toast.error("Please select a date and time.");
+      toast.error(t("selectDate"));
       return;
     }
     const timestamp = new Date(scheduledTime).getTime();
     if (timestamp <= Date.now()) {
-      toast.error("Scheduled time must be in the future.");
+      toast.error(t("futureDate"));
       return;
     }
     if (onSchedule && content.trim()) {
@@ -184,6 +186,7 @@ export function PostComposer({
         }`}
       >
         <PostComposerHeader
+          mode={mode}
           previewOpen={previewOpen}
           onTogglePreview={handleTogglePreview}
           aiOpen={aiOpen}
@@ -202,7 +205,7 @@ export function PostComposer({
             {mode === "comment" && (
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                  {targetChannelName} Post URL
+                  {targetChannelName} · {t("targetUrl")}
                 </label>
                 <div className="relative">
                   <input
@@ -214,9 +217,7 @@ export function PostComposer({
                   />
                   <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 </div>
-                <p className="mt-1.5 text-xs text-gray-400">
-                  Paste the full post link from the selected channel.
-                </p>
+                <p className="mt-1.5 text-xs text-gray-400">{t("pasteLink")}</p>
               </div>
             )}
             <ContentEditor
@@ -234,7 +235,7 @@ export function PostComposer({
                 className="text-sm text-blue-600 hover:underline flex items-center gap-1"
               >
                 <CalendarIcon className="w-4 h-4" />
-                {showScheduler ? "Cancel Schedule" : "Schedule for later"}
+                {showScheduler ? t("cancelSchedule") : t("scheduleLater")}
               </button>
               {showScheduler && (
                 <div className="mt-2 p-3 border rounded-lg flex items-center gap-3">
@@ -249,7 +250,7 @@ export function PostComposer({
                     disabled={!scheduledTime || isScheduling}
                     className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {isScheduling ? "Scheduling..." : "Confirm Schedule"}
+                    {isScheduling ? t("scheduling") : t("confirmSchedule")}
                   </button>
                 </div>
               )}
