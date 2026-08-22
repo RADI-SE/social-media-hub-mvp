@@ -17,9 +17,11 @@ const EMPTY_TASKS: Doc<"followUpTasks">[] = [];
 export default function CommentList({
   comments,
   posts,
+  embedded = false,
 }: {
   comments: Doc<"comments">[];
   posts: Doc<"posts">[];
+  embedded?: boolean;
 }) {
   const t = useTranslations("comments");
   const user = useQuery(api.users.current);
@@ -68,20 +70,22 @@ export default function CommentList({
 
   return (
     <>
-      <PageHeader
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        description={t("description")}
-        action={
-          <Link
-            href="/comments/post"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white"
-          >
-            <Plus size={16} />
-            {t("newComment")}
-          </Link>
-        }
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow={t("eyebrow")}
+          title={t("title")}
+          description={t("description")}
+          action={
+            <Link
+              href="/comments/post"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#173b9a] px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              <Plus size={16} />
+              {t("newComment")}
+            </Link>
+          }
+        />
+      )}
       {user === undefined || (user && tasks === undefined) ? (
         <div className="glass-card flex min-h-64 items-center justify-center rounded-3xl text-sm text-slate-500">
           <Loader2 size={18} className="mr-2 animate-spin" />

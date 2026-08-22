@@ -9,7 +9,6 @@ import {
   CheckSquare2,
   FileText,
   LayoutDashboard,
-  MessageCircleMore,
   Calendar,
   Plus,
 } from "lucide-react";
@@ -24,7 +23,6 @@ export default function SidebarHeader() {
     { name: t("overview"), href: "/home", icon: LayoutDashboard },
     { name: t("calendar"), href: "/schedule", icon: CalendarDays },
     { name: t("posts"), href: "/posts", icon: FileText },
-    { name: t("comments"), href: "/comments", icon: MessageCircleMore },
     { name: t("analytics"), href: "/analytics", icon: BarChart3 },
     { name: t("tasks"), href: "/tasks", icon: CheckSquare2 },
   ];

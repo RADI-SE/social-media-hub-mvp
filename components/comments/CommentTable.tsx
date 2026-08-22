@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import StatusPill from "@/components/hub/StatusPill";
 import DataTable, { dataTableFeatures } from "@/components/ui/DataTable";
+import TableToolbar from "@/components/ui/TableToolbar";
 import ConvertToTaskButton from "./ConvertToTaskButton";
 import { FacebookIcon, InstagramIcon } from "@/components/ui/ChannelIcons";
 import { useFormatter, useTranslations } from "next-intl";
@@ -13,6 +14,14 @@ import { useFormatter, useTranslations } from "next-intl";
 type Comment = Doc<"comments">;
 type Post = Doc<"posts">;
 const column = createColumnHelper<typeof dataTableFeatures, Comment>();
+const categories = [
+  "Lead",
+  "Question",
+  "Complaint",
+  "Feedback",
+  "Engagement",
+  "Other",
+] as const;
 
 interface CommentTableProps {
   comments: Comment[];
@@ -33,7 +42,11 @@ export default function CommentTable({
 }: CommentTableProps) {
   const t = useTranslations("comments");
   const common = useTranslations("common");
+  const categoryT = useTranslations("statusValues");
   const formatter = useFormatter();
+  const [search, setSearch] = useState("");
+  const [classification, setClassification] = useState("");
+  const [platform, setPlatform] = useState("");
   const postsById = useMemo(
     () => new Map(posts.map((post) => [post._id, post])),
     [posts],
@@ -134,15 +147,66 @@ export default function CommentTable({
       tasks,
     ],
   );
+  const filteredComments = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return comments.filter(
+      (comment) =>
+        (!query ||
+          comment.content.toLocaleLowerCase().includes(query) ||
+          comment.authorName.toLocaleLowerCase().includes(query)) &&
+        (!classification || comment.classification === classification) &&
+        (!platform || comment.platform === platform),
+    );
+  }, [classification, comments, platform, search]);
 
   return (
-    <DataTable
-      columns={columns}
-      data={comments}
-      emptyMessage={t("emptyTitle")}
-      initialSorting={[{ id: "createdAt", desc: true }]}
-      getRowId={(comment) => comment._id}
-    />
+    <>
+      <TableToolbar
+        title={t("postComments")}
+        countLabel={t("results", {
+          count: filteredComments.length,
+          total: comments.length,
+        })}
+        search={search}
+        searchPlaceholder={t("searchPlaceholder")}
+        clearLabel={t("clearFilters")}
+        onSearchChange={setSearch}
+        onClear={() => {
+          setSearch("");
+          setClassification("");
+          setPlatform("");
+        }}
+        filters={[
+          {
+            label: t("classification"),
+            value: classification,
+            allLabel: t("allCategories"),
+            options: categories.map((category) => ({
+              value: category,
+              label: categoryT(category),
+            })),
+            onChange: setClassification,
+          },
+          {
+            label: t("channel"),
+            value: platform,
+            allLabel: t("allChannels"),
+            options: [
+              { value: "facebook", label: "Facebook" },
+              { value: "instagram", label: "Instagram" },
+            ],
+            onChange: setPlatform,
+          },
+        ]}
+      />
+      <DataTable
+        columns={columns}
+        data={filteredComments}
+        emptyMessage={t("emptyTitle")}
+        initialSorting={[{ id: "createdAt", desc: true }]}
+        getRowId={(comment) => comment._id}
+      />
+    </>
   );
 }
 
@@ -155,7 +219,7 @@ function PostContext({ comment, post }: { comment: Comment; post?: Post }) {
   const postId = post?._id ?? comment.postId;
 
   return (
-    <div className="max-w-56 text-left">
+    <div className="max-w-56 text-start">
       <p
         className="mb-1 truncate font-mono text-[0.62rem] text-slate-400"
         title={postId}
