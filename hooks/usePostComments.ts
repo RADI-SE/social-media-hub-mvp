@@ -38,6 +38,21 @@ type RawComment = {
   platform?: string;
 };
 
+type CommentsResponse = {
+  success?: boolean;
+  error?: string;
+  comments?: unknown;
+  data?: unknown;
+  result?: unknown;
+};
+
+const getRawComments = (value: unknown): RawComment[] => {
+  if (Array.isArray(value)) return value as RawComment[];
+  if (!value || typeof value !== "object") return [];
+  const record = value as CommentsResponse;
+  return getRawComments(record.comments ?? record.data ?? record.result);
+};
+
 const asTimestamp = (value: number | string | undefined) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
@@ -88,14 +103,17 @@ export function usePostComments(postId: Id<"posts">, userId: string) {
 
     try {
       const token = (await getToken()) ?? undefined;
-      const result = await fetchPostComments(postId, userId, token, refresh);
-      if (!result.success) {
+      const result = (await fetchPostComments(
+        postId,
+        userId,
+        token,
+        refresh,
+      )) as CommentsResponse;
+      if (result.success === false) {
         throw new Error(result.error || "Failed to fetch comments");
       }
 
-      const rawComments = Array.isArray(result.comments)
-        ? (result.comments as RawComment[])
-        : [];
+      const rawComments = getRawComments(result);
       const usableComments = rawComments.filter((comment) =>
         (comment.content ?? comment.text ?? comment.message ?? "").trim(),
       );

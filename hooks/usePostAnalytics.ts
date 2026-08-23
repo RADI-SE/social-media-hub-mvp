@@ -18,13 +18,60 @@ type AnalyticsSnapshot = Pick<
   "likes" | "comments" | "shares" | "scrapedAt"
 >;
 
+type AnalyticsResponse = {
+  success?: boolean;
+  error?: string;
+  cached?: boolean;
+  data?: unknown;
+  analytics?: unknown;
+  result?: unknown;
+};
+
+const toMetric = (value: unknown) => {
+  const metric = Number(value);
+  return Number.isFinite(metric) ? metric : null;
+};
+
+function getAnalyticsSnapshot(value: unknown): AnalyticsSnapshot | null {
+  if (Array.isArray(value)) {
+    return (
+      value
+        .map(getAnalyticsSnapshot)
+        .filter((item): item is AnalyticsSnapshot => item !== null)
+        .sort((a, b) => b.scrapedAt - a.scrapedAt)[0] ?? null
+    );
+  }
+  if (!value || typeof value !== "object") return null;
+
+  const record = value as Record<string, unknown>;
+  const likes = toMetric(record.likes);
+  const comments = toMetric(record.comments);
+  if (likes !== null && comments !== null) {
+    return {
+      likes,
+      comments,
+      shares: toMetric(record.shares) ?? 0,
+      scrapedAt:
+        toMetric(record.scrapedAt ?? record.updatedAt ?? record.createdAt) ??
+        Date.now(),
+    };
+  }
+
+  return getAnalyticsSnapshot(record.data ?? record.analytics ?? record.result);
+}
+
 export function usePostAnalytics(postId: Id<"posts">, userId: string) {
   const t = useTranslations("analytics");
   const { getToken } = useAuth();
   const storedAnalytics = useQuery(api.analytics.getLatestForPost, { postId });
   const [refreshedAnalytics, setRefreshedAnalytics] =
     useState<AnalyticsSnapshot | null>(null);
-  const analytics = refreshedAnalytics ?? storedAnalytics;
+  const analytics =
+    refreshedAnalytics &&
+    (!storedAnalytics ||
+      refreshedAnalytics.scrapedAt >= storedAnalytics.scrapedAt)
+      ? refreshedAnalytics
+      : storedAnalytics;
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
@@ -66,11 +113,16 @@ export function usePostAnalytics(postId: Id<"posts">, userId: string) {
     setError(null);
     try {
       const token = (await getToken()) ?? undefined;
-      const result = await fetchPostAnalytics(postId, userId, token);
-      if (!result.success) {
+      const result = (await fetchPostAnalytics(
+        postId,
+        userId,
+        token,
+      )) as AnalyticsResponse;
+      if (result.success === false) {
         throw new Error(result.error || t("refreshFailed"));
       }
-      if (result.data) setRefreshedAnalytics(result.data);
+      const snapshot = getAnalyticsSnapshot(result);
+      if (snapshot) setRefreshedAnalytics(snapshot);
 
       const nextAllowedAt = Date.now() + REFRESH_COOLDOWN_MS;
       localStorage.setItem(cooldownKey(postId), String(nextAllowedAt));

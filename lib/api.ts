@@ -255,12 +255,12 @@ export async function uploadTempImage(
 
 
 export async function fetchPostAnalytics(postId: string, userId: string, token?: string) {
-  const url = `${SCRIPT_URL}/api/analytics/refresh/${postId}`;
+  const url = `${SCRIPT_URL}/api/analytics/refresh/${postId}?_=${Date.now()}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: buildHeaders(token),
     body: JSON.stringify({ userId }), // 👈 send userId in body
-    cache: 'no-cache',
+    cache: 'no-store',
   });
   if (!response.ok) {
     const text = await response.text();
@@ -276,11 +276,12 @@ export async function fetchPostComments(
   token?: string,
   refresh?: boolean
 ) {
-  const url = `${SCRIPT_URL}/api/comments/fetch/${postId}?userId=${encodeURIComponent(userId)}` + (refresh ? '&refresh=true' : '');
+  const url = `${SCRIPT_URL}/api/comments/fetch/${postId}?userId=${encodeURIComponent(userId)}&_=${Date.now()}` + (refresh ? '&refresh=true' : '');
   const response = await fetch(url, {
     method: 'POST',
     headers: buildHeaders(token),
-    cache: 'no-cache',
+    body: JSON.stringify({ userId }),
+    cache: 'no-store',
   });
   if (!response.ok) {
     const text = await response.text();
