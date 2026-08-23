@@ -140,7 +140,10 @@ export async function publishPost(
       imageBase64,
     }),
   });
-  if (!response.ok) throw new Error(`Failed to publish post: ${response.statusText}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error || `Failed to publish post: ${response.statusText}`);
+  }
   return response.json();
 }
 
@@ -273,7 +276,6 @@ export async function fetchPostComments(
   token?: string,
   refresh?: boolean
 ) {
-  // ✅ Correctly pass the userId in the query string
   const url = `${SCRIPT_URL}/api/comments/fetch/${postId}?userId=${encodeURIComponent(userId)}` + (refresh ? '&refresh=true' : '');
   const response = await fetch(url, {
     method: 'POST',

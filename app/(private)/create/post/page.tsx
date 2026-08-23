@@ -54,29 +54,55 @@ export default function CreatePage() {
     );
 
     try {
-      const token = (await getToken()) ?? undefined;
       let imageBase64: string | undefined;
       if (image) {
         imageBase64 = await fileToBase64(image);
       }
 
-      for (const platform of platforms) {
-        const result =
-          platform === "Instagram"
-            ? await publishInstagramPost(userId, content, token, imageBase64)
-            : await publishPost(userId, content, token, imageBase64);
+      const results = await Promise.allSettled(
+        platforms.map(async (platform) => {
+          const token =
+            (await getToken(
+              platforms.length > 1 ? { skipCache: true } : undefined,
+            )) ?? undefined;
+          const result =
+            platform === "Instagram"
+              ? await publishInstagramPost(userId, content, token, imageBase64)
+              : await publishPost(userId, content, token, imageBase64);
 
-        if (!result.success) {
-          throw new Error(result.error || t("publishFailed", { platform }));
-        }
+          if (!result.success) {
+            throw new Error(result.error || t("publishFailed", { platform }));
+          }
+          if (!result.postId) {
+            await recordPublishedPost({ userId, platform, content });
+          }
+          return platform;
+        }),
+      );
 
-        if (!result.postId) {
-          await recordPublishedPost({ userId, platform, content });
-        }
-      }
       toast.dismiss(loadingToast);
-      toast.success(t("published", { platforms: platformLabel }));
-      router.push("/home");
+      const publishedPlatforms = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      const failures = results.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [
+              `${platforms[index]}: ${
+                result.reason instanceof Error
+                  ? result.reason.message
+                  : String(result.reason)
+              }`,
+            ]
+          : [],
+      );
+
+      if (publishedPlatforms.length > 0) {
+        toast.success(
+          t("published", { platforms: formatPlatforms(publishedPlatforms) }),
+        );
+      }
+      failures.forEach((failure) => toast.error(failure));
+      if (failures.length === 0) router.push("/home");
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error((error as Error).message);
@@ -113,16 +139,17 @@ export default function CreatePage() {
     );
 
     try {
-      const token = (await getToken()) ?? undefined;
       let mediaUrl: string | undefined;
 
       if (image) {
         const imageBase64 = await fileToBase64(image);
+        const token = (await getToken({ skipCache: true })) ?? undefined;
         mediaUrl = await uploadTempImage(imageBase64, userId, token);
         console.log(`📸 Image uploaded to temp: ${mediaUrl}`);
       }
 
       for (const platform of platforms) {
+        const token = (await getToken({ skipCache: true })) ?? undefined;
         await schedulePost({
           userId,
           content,

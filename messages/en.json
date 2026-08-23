@@ -24,11 +24,18 @@
     "user": "User",
     "noEmail": "No email"
   },
+  "table": {
+    "page": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next"
+  },
   "statusValues": {
     "Draft": "Draft",
     "Scheduled": "Scheduled",
     "Published": "Published",
     "Failed": "Failed",
+    "Processing": "Processing",
+    "PendingApproval": "Pending approval",
     "Lead": "Lead",
     "Question": "Question",
     "Complaint": "Complaint",
@@ -174,7 +181,19 @@
     "saveUrl": "Save URL",
     "invalidUrl": "Enter a valid {platform} post URL.",
     "urlSaved": "Post URL saved",
-    "urlFailed": "Could not save post URL"
+    "urlFailed": "Could not save post URL",
+    "tableTitle": "All posts",
+    "results": "Showing {count} of {total}",
+    "searchPlaceholder": "Search post content or platform…",
+    "clearFilters": "Clear filters",
+    "allPlatforms": "All platforms",
+    "allStatuses": "All statuses",
+    "openDetails": "Open post: {content}",
+    "loadingDetail": "Loading post details…",
+    "notFound": "This post could not be found.",
+    "backToPosts": "Back to posts",
+    "postId": "Post {id}",
+    "savedDate": "Saved date"
   },
   "comments": {
     "eyebrow": "Engagement",
@@ -207,7 +226,15 @@
     "posting": "Posting comment on {platform}...",
     "posted": "Comment posted on {platform}!",
     "scheduling": "Scheduling comment on {platform}...",
-    "scheduled": "Comment scheduled on {platform}!"
+    "scheduled": "Comment scheduled on {platform}!",
+    "postComments": "Post comments",
+    "postCommentsDescription": "Facebook and Instagram comments are grouped under their post and classified by customer signal.",
+    "results": "Showing {count} of {total}",
+    "searchPlaceholder": "Search comments or authors…",
+    "clearFilters": "Clear filters",
+    "allCategories": "All categories",
+    "channel": "Channel",
+    "allChannels": "All channels"
   },
   "analytics": {
     "eyebrow": "Performance",

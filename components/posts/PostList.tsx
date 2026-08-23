@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Doc } from "@/convex/_generated/dataModel";
 import PageHeader from "@/components/hub/PageHeader";
 import StatusPill from "@/components/hub/StatusPill";
 import DataTable, { dataTableFeatures } from "@/components/ui/DataTable";
+import TableToolbar from "@/components/ui/TableToolbar";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -92,17 +93,6 @@ function createColumns(
 
 export default function PostList({ posts }: { posts: Post[] }) {
   const t = useTranslations("posts");
-  const common = useTranslations("common");
-  const formatter = useFormatter();
-  const columns = useMemo(
-    () => createColumns(t, common, formatter),
-    [t, common, formatter],
-  );
-  const router = useRouter();
-
-  const handleRowClick = (post: Post) => {
-    router.push(`/posts/${post._id}/analytics`);
-  };
 
   return (
     <>
@@ -121,15 +111,92 @@ export default function PostList({ posts }: { posts: Post[] }) {
         }
       />
       <section className="glass-card overflow-hidden rounded-3xl">
-        <DataTable
-          columns={columns}
-          data={posts}
-          emptyMessage={t("empty")}
-          initialSorting={[{ id: "date", desc: true }]}
-          getRowId={(post) => post._id}
-          onRowClick={handleRowClick} // 👈 row click navigation
-        />
+        <PostTable posts={posts} />
       </section>
+    </>
+  );
+}
+
+export function PostTable({
+  posts,
+  showToolbar = true,
+  pageSize = 8,
+}: {
+  posts: Post[];
+  showToolbar?: boolean;
+  pageSize?: number;
+}) {
+  const t = useTranslations("posts");
+  const common = useTranslations("common");
+  const formatter = useFormatter();
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [status, setStatus] = useState("");
+  const columns = useMemo(
+    () => createColumns(t, common, formatter),
+    [t, common, formatter],
+  );
+  const filteredPosts = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return posts.filter(
+      (post) =>
+        (!query ||
+          post.content.toLocaleLowerCase().includes(query) ||
+          post.platform.toLocaleLowerCase().includes(query)) &&
+        (!platform || post.platform === platform) &&
+        (!status || post.status === status),
+    );
+  }, [platform, posts, search, status]);
+  const options = (values: string[]) =>
+    [...new Set(values)].sort().map((value) => ({ label: value, value }));
+
+  return (
+    <>
+      {showToolbar && (
+        <TableToolbar
+          title={t("tableTitle")}
+          countLabel={t("results", {
+            count: filteredPosts.length,
+            total: posts.length,
+          })}
+          search={search}
+          searchPlaceholder={t("searchPlaceholder")}
+          clearLabel={t("clearFilters")}
+          onSearchChange={setSearch}
+          onClear={() => {
+            setSearch("");
+            setPlatform("");
+            setStatus("");
+          }}
+          filters={[
+            {
+              label: t("platform"),
+              value: platform,
+              allLabel: t("allPlatforms"),
+              options: options(posts.map((post) => post.platform)),
+              onChange: setPlatform,
+            },
+            {
+              label: common("status"),
+              value: status,
+              allLabel: t("allStatuses"),
+              options: options(posts.map((post) => post.status)),
+              onChange: setStatus,
+            },
+          ]}
+        />
+      )}
+      <DataTable
+        columns={columns}
+        data={filteredPosts}
+        emptyMessage={t("empty")}
+        initialSorting={[{ id: "date", desc: true }]}
+        getRowId={(post) => post._id}
+        onRowClick={(post) => router.push(`/posts/${post._id}`)}
+        getRowLabel={(post) => t("openDetails", { content: post.content })}
+        pageSize={pageSize}
+      />
     </>
   );
 }

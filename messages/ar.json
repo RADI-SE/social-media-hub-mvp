@@ -20,11 +20,18 @@
     "user": "المستخدم",
     "noEmail": "لا يوجد بريد إلكتروني"
   },
+  "table": {
+    "page": "الصفحة {page} من {pages}",
+    "previous": "السابق",
+    "next": "التالي"
+  },
   "statusValues": {
     "Draft": "مسودة",
     "Scheduled": "مجدول",
     "Published": "منشور",
     "Failed": "فشل",
+    "Processing": "قيد المعالجة",
+    "PendingApproval": "بانتظار الموافقة",
     "Lead": "عميل محتمل",
     "Question": "سؤال",
     "Complaint": "شكوى",
@@ -170,7 +177,19 @@
     "saveUrl": "حفظ الرابط",
     "invalidUrl": "أدخل رابط منشور {platform} صالحًا.",
     "urlSaved": "تم حفظ رابط المنشور",
-    "urlFailed": "تعذر حفظ رابط المنشور"
+    "urlFailed": "تعذر حفظ رابط المنشور",
+    "tableTitle": "كل المنشورات",
+    "results": "عرض {count} من {total}",
+    "searchPlaceholder": "ابحث في محتوى المنشور أو المنصة…",
+    "clearFilters": "مسح الفلاتر",
+    "allPlatforms": "كل المنصات",
+    "allStatuses": "كل الحالات",
+    "openDetails": "فتح المنشور: {content}",
+    "loadingDetail": "جارٍ تحميل تفاصيل المنشور…",
+    "notFound": "تعذر العثور على هذا المنشور.",
+    "backToPosts": "العودة إلى المنشورات",
+    "postId": "منشور {id}",
+    "savedDate": "التاريخ المحفوظ"
   },
   "comments": {
     "eyebrow": "التفاعل",
@@ -203,7 +222,15 @@
     "posting": "جارٍ نشر التعليق على {platform}...",
     "posted": "تم نشر التعليق على {platform}!",
     "scheduling": "جارٍ جدولة التعليق على {platform}...",
-    "scheduled": "تمت جدولة التعليق على {platform}!"
+    "scheduled": "تمت جدولة التعليق على {platform}!",
+    "postComments": "تعليقات المنشور",
+    "postCommentsDescription": "تُجمع تعليقات فيسبوك وإنستغرام تحت منشورها وتُصنّف حسب نوع إشارة العميل.",
+    "results": "عرض {count} من {total}",
+    "searchPlaceholder": "ابحث في التعليقات أو أسماء الكتّاب…",
+    "clearFilters": "مسح الفلاتر",
+    "allCategories": "كل التصنيفات",
+    "channel": "القناة",
+    "allChannels": "كل القنوات"
   },
   "analytics": {
     "eyebrow": "الأداء",

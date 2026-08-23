@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { fetchPostAnalytics } from "@/lib/api";
 import { useTranslations } from "next-intl";
 
@@ -13,10 +13,18 @@ const REFRESH_COOLDOWN_MS = 60 * 60 * 1000;
 const cooldownKey = (postId: Id<"posts">) =>
   `spiders-ai:analytics-refresh:${postId}`;
 
+type AnalyticsSnapshot = Pick<
+  Doc<"analytics">,
+  "likes" | "comments" | "shares" | "scrapedAt"
+>;
+
 export function usePostAnalytics(postId: Id<"posts">, userId: string) {
   const t = useTranslations("analytics");
   const { getToken } = useAuth();
-  const analytics = useQuery(api.analytics.getLatestForPost, { postId });
+  const storedAnalytics = useQuery(api.analytics.getLatestForPost, { postId });
+  const [refreshedAnalytics, setRefreshedAnalytics] =
+    useState<AnalyticsSnapshot | null>(null);
+  const analytics = refreshedAnalytics ?? storedAnalytics;
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
@@ -27,6 +35,7 @@ export function usePostAnalytics(postId: Id<"posts">, userId: string) {
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       const stored = Number(localStorage.getItem(cooldownKey(postId)) ?? 0);
+      setRefreshedAnalytics(null);
       setNextRefreshAt(Number.isFinite(stored) ? stored : 0);
       setCooldownLoaded(true);
     });
@@ -61,6 +70,7 @@ export function usePostAnalytics(postId: Id<"posts">, userId: string) {
       if (!result.success) {
         throw new Error(result.error || t("refreshFailed"));
       }
+      if (result.data) setRefreshedAnalytics(result.data);
 
       const nextAllowedAt = Date.now() + REFRESH_COOLDOWN_MS;
       localStorage.setItem(cooldownKey(postId), String(nextAllowedAt));

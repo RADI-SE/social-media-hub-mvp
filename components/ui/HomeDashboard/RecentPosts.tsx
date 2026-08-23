@@ -40,9 +40,10 @@ export function RecentPosts({
               (item) => item._id === post.socialAccountId,
             );
             return (
-              <div
+              <Link
                 key={post._id}
-                className="grid gap-3 px-6 py-5 sm:grid-cols-[1fr_auto] sm:items-center"
+                href={`/posts/${post._id}`}
+                className="grid gap-3 px-6 py-5 transition hover:bg-blue-50/55 sm:grid-cols-[1fr_auto] sm:items-center"
               >
                 <div className="min-w-0">
                   <div className="mb-2 flex items-center gap-2 text-xs text-slate-400">
@@ -59,7 +60,7 @@ export function RecentPosts({
                   </p>
                 </div>
                 <StatusPill value={post.status} />
-              </div>
+              </Link>
             );
           })
         )}
