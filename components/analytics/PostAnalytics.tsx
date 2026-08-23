@@ -10,9 +10,12 @@ import {
   Share2,
   Sparkles,
   TriangleAlert,
+  MessageSquare,
+  Bot,
 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePostAnalytics } from "@/hooks/usePostAnalytics";
+import { usePostComments } from "@/hooks/usePostComments";
 import { useFormatter, useTranslations } from "next-intl";
 
 interface PostAnalyticsProps {
@@ -33,6 +36,13 @@ export function PostAnalytics({ postId, userId }: PostAnalyticsProps) {
     canRefresh,
     cooldownRemaining,
   } = usePostAnalytics(postId, userId);
+
+  const {
+    comments,
+    loading: commentsLoading,
+    error: commentsError,
+    fetchComments,
+  } = usePostComments(postId, userId);
 
   if (isInitialLoading) {
     return (
@@ -68,6 +78,7 @@ export function PostAnalytics({ postId, userId }: PostAnalyticsProps) {
 
   return (
     <div className="space-y-6">
+      {/* ── Hero section ── */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#102f7e] via-[#3156dc] to-[#7186ff] p-6 text-white shadow-2xl shadow-blue-900/20 sm:p-8">
         <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border border-white/15 shadow-[0_0_0_40px_rgba(255,255,255,0.05),0_0_0_80px_rgba(196,255,230,0.05)]" />
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -157,6 +168,126 @@ export function PostAnalytics({ postId, userId }: PostAnalyticsProps) {
           </div>
         </>
       )}
+
+      {/* ── Comments Section ── */}
+      <section className="mt-8 border-t border-slate-200 pt-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={20} className="text-[#3556d9]" />
+            <h2 className="text-xl font-semibold text-[#071e55]">
+              {t("commentsTitle")}
+            </h2>
+            {comments.length > 0 && (
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                {comments.length}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => fetchComments(false)}
+              disabled={commentsLoading}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#173b9a] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#102f7e] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {commentsLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <MessageCircleMore size={16} />
+              )}
+              {commentsLoading ? t("fetchingComments") : t("fetchComments")}
+            </button>
+            {comments.length > 0 && (
+              <button
+                type="button"
+                onClick={() => fetchComments(true)}
+                disabled={commentsLoading}
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-200 disabled:opacity-50"
+              >
+                <RefreshCw
+                  size={14}
+                  className={commentsLoading ? "animate-spin" : ""}
+                />
+                {t("refreshComments")}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {commentsError && (
+          <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {commentsError}
+          </div>
+        )}
+
+        {comments.length === 0 && !commentsLoading && (
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+            <MessageSquare className="mx-auto text-slate-300" size={32} />
+            <p className="mt-2 text-sm text-slate-500">
+              {t("noCommentsFetched")}
+            </p>
+            <p className="text-xs text-slate-400">
+              {t("fetchCommentsHint")}
+            </p>
+          </div>
+        )}
+
+        {commentsLoading && (
+          <div className="mt-6 flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-[#3556d9]" size={28} />
+            <span className="ml-3 text-sm text-slate-500">
+              {t("fetchingComments")}
+            </span>
+          </div>
+        )}
+
+        {comments.length > 0 && !commentsLoading && (
+          <div className="mt-4 space-y-3">
+            {comments.map((comment: any) => {
+              const classification = comment.classification || "Other";
+              const badgeColors: Record<string, string> = {
+                Lead: "bg-green-100 text-green-800",
+                Question: "bg-blue-100 text-blue-800",
+                Complaint: "bg-red-100 text-red-800",
+                Feedback: "bg-yellow-100 text-yellow-800",
+                Engagement: "bg-purple-100 text-purple-800",
+                Other: "bg-gray-100 text-gray-800",
+              };
+              return (
+                <div
+                  key={comment._id}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-[#071e55]">
+                          {comment.authorName || "Unknown"}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeColors[classification] || badgeColors.Other}`}
+                        >
+                          <Bot size={12} />
+                          {classification}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-700 break-words">
+                        {comment.content}
+                      </p>
+                    </div>
+                    <span className="flex-none text-xs text-slate-400">
+                      {formatter.dateTime(comment.createdAt, {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

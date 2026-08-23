@@ -1,6 +1,49 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+
+export const storeComments = mutation({
+  args: {
+    comments: v.array(
+      v.object({
+        postId: v.id("posts"),
+        userId: v.string(),
+        authorName: v.string(),
+        content: v.string(),
+        platform: v.union(v.literal("facebook"), v.literal("instagram")),
+        classification: v.string(),
+        scrapedAt: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    for (const c of args.comments) {
+      await ctx.db.insert("comments", {
+        userId: c.userId,
+        targetUrl: "",
+        postId: c.postId,
+        authorName: c.authorName,
+        content: c.content,
+        platform: c.platform,
+        classification: c.classification,
+        status: "Published",
+        createdAt: c.scrapedAt,
+      });
+    }
+  },
+});
+ 
+export const getCommentsForPost = query({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("comments")
+      .withIndex("by_postId", (q) => q.eq("postId", args.postId))
+      .collect();
+  },
+});
+
+
 export const createComment = mutation({
   args: {
     userId: v.string(),
