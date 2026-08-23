@@ -3,7 +3,11 @@
     "title": "Spiders AI | Social Media Marketing Hub",
     "description": "Plan, monitor, analyze, and follow up from one focused workspace."
   },
-  "language": { "label": "Language", "en": "English", "ar": "العربية" },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  },
   "common": {
     "loading": "Loading…",
     "cancel": "Cancel",
@@ -264,7 +268,13 @@
     "cachedResponse": "Cached response",
     "cooldownHour": "Available in 1 hour",
     "cooldownMinutes": "Available in {count} min",
-    "loadingUser": "Loading user…"
+    "loadingUser": "Loading user…",
+    "commentsTitle": "Comments",
+    "fetchComments": "Fetch Comments",
+    "fetchingComments": "Fetching comments…",
+    "refreshComments": "Refresh Comments",
+    "noCommentsFetched": "No comments fetched yet.",
+    "fetchCommentsHint": "Click 'Fetch Comments' to scrape and classify comments from the platform."
   },
   "tasks": {
     "eyebrow": "Follow-up",

@@ -268,3 +268,49 @@ export async function fetchPostAnalytics(postId: string, userId: string, token?:
   }
   return response.json();
 }
+
+
+export async function fetchPostComments(
+  postId: string,
+  userId: string,
+  token?: string,
+  refresh?: boolean
+) {
+  const url = `${SCRIPT_URL}/api/comments/fetch/${postId}?userId=${encodeURIComponent(userId)}` + (refresh ? '&refresh=true' : '');
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: buildHeaders(token),
+    cache: 'no-cache',
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || 'Failed to fetch comments');
+  }
+  return response.json();
+}
+
+
+export async function classifyComments(texts: string[], token?: string): Promise<string[]> {
+  if (texts.length === 0) return [];
+  try {
+    const response = await fetch('/api/ai/classify', {
+      method: 'POST',
+      headers: buildHeaders(token),
+      body: JSON.stringify({ texts }),
+    });
+    if (!response.ok) {
+      console.error('[classifyComments] Error response:', response.status);
+      return texts.map(() => 'Other');
+    }
+    const data = await response.json();
+    return Array.isArray(data.classifications) ? data.classifications : texts.map(() => 'Other');
+  } catch (err) {
+    console.error('[classifyComments] Exception:', err);
+    return texts.map(() => 'Other');
+  }
+}
+
+export async function classifyComment(text: string, token?: string): Promise<string> {
+  const [classification] = await classifyComments([text], token);
+  return classification || 'Other';
+}
