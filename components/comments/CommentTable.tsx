@@ -8,6 +8,10 @@ import StatusPill from "@/components/hub/StatusPill";
 import DataTable, { dataTableFeatures } from "@/components/ui/DataTable";
 import TableToolbar from "@/components/ui/TableToolbar";
 import ConvertToTaskButton from "./ConvertToTaskButton";
+import SuggestedPriorityBadge, {
+  getSuggestedPriority,
+  suggestedPriorities,
+} from "./SuggestedPriority";
 import { FacebookIcon, InstagramIcon } from "@/components/ui/ChannelIcons";
 import { useFormatter, useTranslations } from "next-intl";
 
@@ -47,6 +51,7 @@ export default function CommentTable({
   const [search, setSearch] = useState("");
   const [classification, setClassification] = useState("");
   const [platform, setPlatform] = useState("");
+  const [priority, setPriority] = useState("");
   const postsById = useMemo(
     () => new Map(posts.map((post) => [post._id, post])),
     [posts],
@@ -102,6 +107,15 @@ export default function CommentTable({
           header: t("classification"),
           cell: ({ getValue }) => <StatusPill value={getValue()} />,
         }),
+        column.display({
+          id: "suggestedPriority",
+          header: t("suggestedPriority"),
+          cell: ({ row }) => (
+            <SuggestedPriorityBadge
+              classification={row.original.classification}
+            />
+          ),
+        }),
         column.accessor("status", {
           header: common("status"),
           cell: ({ getValue }) => (
@@ -155,9 +169,11 @@ export default function CommentTable({
           comment.content.toLocaleLowerCase().includes(query) ||
           comment.authorName.toLocaleLowerCase().includes(query)) &&
         (!classification || comment.classification === classification) &&
-        (!platform || comment.platform === platform),
+        (!platform || comment.platform === platform) &&
+        (!priority ||
+          getSuggestedPriority(comment.classification) === priority),
     );
-  }, [classification, comments, platform, search]);
+  }, [classification, comments, platform, priority, search]);
 
   return (
     <>
@@ -175,6 +191,7 @@ export default function CommentTable({
           setSearch("");
           setClassification("");
           setPlatform("");
+          setPriority("");
         }}
         filters={[
           {
@@ -196,6 +213,16 @@ export default function CommentTable({
               { value: "instagram", label: "Instagram" },
             ],
             onChange: setPlatform,
+          },
+          {
+            label: t("suggestedPriority"),
+            value: priority,
+            allLabel: t("allPriorities"),
+            options: suggestedPriorities.map((value) => ({
+              value,
+              label: t(`priority${value}`),
+            })),
+            onChange: setPriority,
           },
         ]}
       />

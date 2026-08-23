@@ -49,8 +49,8 @@ export default function TableToolbar({
           </button>
         )}
       </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(15rem,1fr)_repeat(2,minmax(9rem,0.35fr))]">
-        <label className="relative">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
+        <label className="relative min-w-60 flex-1">
           <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
@@ -60,7 +60,7 @@ export default function TableToolbar({
           />
         </label>
         {filters.map((filter) => (
-          <label key={filter.label}>
+          <label key={filter.label} className="min-w-36 flex-1 md:max-w-52">
             <span className="sr-only">{filter.label}</span>
             <select
               aria-label={filter.label}
