@@ -24,8 +24,8 @@ type Account = {
 
 export default function ContactsPage() {
   const t = useTranslations("growth.contacts");
-  const contacts = useQuery(api.contacts.listMyContacts);
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const contacts = useQuery(api.contacts.listContacts);
+  const accounts = useQuery(api.growth.listAccounts);
   const updateContact = useMutation(api.contacts.updateContact);
 
   const [assigningId, setAssigningId] = useState<string | null>(null);

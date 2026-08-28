@@ -21,7 +21,7 @@ type AccountRow = {
 
 export default function CMODashboard() {
   const t = useTranslations("growth.roleDashboards.cmo");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const metrics = useMemo(() => {
     if (!accounts || accounts.length === 0) {

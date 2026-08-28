@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner"; // or any toast library you use
 import { useState } from "react";
+import AdminGuard from "@/components/AdminGuard";
 
 const roles = [
   { value: "admin", label: "Admin" },
@@ -13,6 +14,14 @@ const roles = [
 ];
 
 export default function TeamPage() {
+  return (
+    <AdminGuard>
+      <TeamManagement />
+    </AdminGuard>
+  );
+}
+
+function TeamManagement() {
   const users = useQuery(api.admin.listUsers);
   const updateRole = useMutation(api.admin.updateUserRole);
   const [updatingId, setUpdatingId] = useState<string | null>(null);

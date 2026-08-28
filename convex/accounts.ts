@@ -58,15 +58,9 @@ export const updateAccount = mutation({
     ltv: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    await requireRole(ctx, ["admin", "marketing_manager"]);
     const account = await ctx.db.get(args.accountId);
     if (!account) throw new Error("Account not found");
-
-    // Allow only the owner or an admin
-    if (account.ownerUserId !== clerkUserId) {
-      const user = await requireRole(ctx, ["admin"]);
-      if (!user) throw new Error("Unauthorized");
-    }
 
     const updates: any = { updatedAt: Date.now() };
     if (args.name !== undefined) updates.name = args.name;
@@ -80,18 +74,13 @@ export const updateAccount = mutation({
   },
 });
 
-// Delete an account (owner or admin)
+// Delete an account (admin or marketing manager - destructive)
 export const deleteAccount = mutation({
   args: { accountId: v.id("accounts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    await requireRole(ctx, ["admin", "marketing_manager"]);
     const account = await ctx.db.get(args.accountId);
     if (!account) throw new Error("Account not found");
-
-    if (account.ownerUserId !== clerkUserId) {
-      const user = await requireRole(ctx, ["admin"]);
-      if (!user) throw new Error("Unauthorized");
-    }
 
     // Optionally delete related contacts/events first
     await ctx.db.delete(args.accountId);
@@ -99,18 +88,11 @@ export const deleteAccount = mutation({
   },
 });
 
-// Get single account (owner or admin)
+// Get single account (shared read - the whole team works the same accounts)
 export const getAccount = query({
   args: { accountId: v.id("accounts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
-    const account = await ctx.db.get(args.accountId);
-    if (!account) return null;
-
-    if (account.ownerUserId !== clerkUserId) {
-      const user = await requireRole(ctx, ["admin"]);
-      if (!user) throw new Error("Unauthorized");
-    }
-    return account;
+    await requireAuth(ctx);
+    return await ctx.db.get(args.accountId);
   },
 });

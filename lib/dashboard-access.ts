@@ -17,9 +17,11 @@ type DashboardNavLabel =
   | "growthScoreBreakdown"
   | "growthContacts"
   | "growthFlagged"
+  | "growthTasks"
   | "posts"
   | "calendar"
-  | "comments";
+  | "comments"
+  | "tasks";
 
 export const dashboardNavigation: Record<
   DashboardRole,
@@ -29,20 +31,28 @@ export const dashboardNavigation: Record<
     { label: "growthDashboard", href: "/home" },
     { label: "growthTeam", href: "/growth/team" },
     { label: "growthActivity", href: "/growth/activity" },
+    { label: "growthTasks", href: "/growth/tasks" },
+    { label: "tasks", href: "/tasks" },
   ],
- cmo: [
-  { label: "growthDashboard", href: "/home" },
-  { label: "growthPipeline", href: "/growth/pipeline" },
-  { label: "growthROI", href: "/growth/roi" },
-  { label: "growthLTV", href: "/growth/ltv" },
-  { label: "growthAlerts", href: "/growth/alerts" },
-],
+  cmo: [
+    { label: "growthDashboard", href: "/home" },
+    { label: "growthPipeline", href: "/growth/pipeline" },
+    { label: "growthROI", href: "/growth/roi" },
+    { label: "growthLTV", href: "/growth/ltv" },
+    { label: "growthAlerts", href: "/growth/alerts" },
+    { label: "comments", href: "/comments" },
+    { label: "growthTasks", href: "/growth/tasks" },
+    { label: "tasks", href: "/tasks" },
+  ],
   marketing_manager: [
     { label: "growthDashboard", href: "/home" },
     { label: "growthAccounts", href: "/growth/accounts" },
     { label: "growthLeads", href: "/growth/leads" },
     { label: "growthJourneys", href: "/growth/journeys" },
     { label: "growthScoreBreakdown", href: "/growth/score-breakdown" },
+    { label: "comments", href: "/comments" },
+    { label: "growthTasks", href: "/growth/tasks" },
+    { label: "tasks", href: "/tasks" },
   ],
   social_media_user: [
     { label: "growthDashboard", href: "/home" },
@@ -51,6 +61,7 @@ export const dashboardNavigation: Record<
     { label: "comments", href: "/comments" },
     { label: "growthContacts", href: "/growth/contacts" },
     { label: "growthFlagged", href: "/growth/flagged" },
+    { label: "tasks", href: "/tasks" },
   ],
 };
 

@@ -17,8 +17,8 @@ type Contact = {
 
 export default function LeadsPage() {
   const t = useTranslations("growth.leads");
-  const contacts = useQuery(api.contacts.listMyContacts);
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const contacts = useQuery(api.contacts.listContacts);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const columns: ColumnDef<Contact, any>[] = [
     { accessorKey: "name", header: t("person"), cell: ({ row }) => row.original.name ?? "—" },

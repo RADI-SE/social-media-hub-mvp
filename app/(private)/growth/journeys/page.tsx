@@ -18,7 +18,7 @@ type Account = {
 
 export default function JourneysPage() {
   const t = useTranslations("growth.journeys");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const stageCounts = accounts?.reduce<Record<string, number>>((counts, acc) => {
     counts[acc.stage] = (counts[acc.stage] ?? 0) + 1;

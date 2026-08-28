@@ -2,9 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { KeyRound, Loader2, ShieldCheck, X } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { toast } from "sonner";
+import { KeyRound, Loader2, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import PageHeader from "@/components/hub/PageHeader";
 import { useTranslations } from "next-intl";
+import { api } from "@/convex/_generated/api";
+import { useDashboardRole } from "@/lib/dashboard-access";
 import { ProfilePhoto } from "../ui/profile/ProfilePhoto";
 import { ProfileField } from "../ui/profile/ProfileField";
 import { DangerZone } from "../ui/profile/DangerZone";
@@ -33,6 +37,23 @@ export function ProfileSettings() {
   const t = useTranslations("profile");
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
+  const role = useDashboardRole();
+  const hasAdmin = useQuery(api.admin.hasAdmin);
+  const bootstrapAdmin = useMutation(api.admin.bootstrapAdmin);
+  const roleLabels = useTranslations("growth.workspaceRoles");
+  const [claimingAdmin, setClaimingAdmin] = useState(false);
+
+  async function claimAdmin() {
+    setClaimingAdmin(true);
+    try {
+      await bootstrapAdmin();
+      toast.success(t("adminClaimed"));
+    } catch (error) {
+      toast.error(messageFrom(error, t("adminClaimFailed")));
+    } finally {
+      setClaimingAdmin(false);
+    }
+  }
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [nameError, setNameError] = useState("");
@@ -284,6 +305,39 @@ export function ProfileSettings() {
         title={t("title")}
         description={t("description")}
       />
+      <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-white/90 bg-white/65 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#3156dc]">
+            <ShieldCheck size={18} />
+          </span>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+              {t("workspaceRole")}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-[#071e55]">
+              {role ? roleLabels(role) : t("loadingRole")}
+            </p>
+          </div>
+        </div>
+        {hasAdmin === false && (
+          <div className="flex items-center gap-3 rounded-xl bg-amber-50 px-4 py-3 text-amber-800">
+            <ShieldAlert size={17} className="shrink-0" />
+            <div>
+              <p className="text-xs font-semibold">{t("noAdminTitle")}</p>
+              <p className="mt-0.5 text-xs leading-5">{t("noAdminDescription")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={claimAdmin}
+              disabled={claimingAdmin}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+            >
+              {claimingAdmin && <Loader2 size={13} className="animate-spin" />}
+              {t("claimAdmin")}
+            </button>
+          </div>
+        )}
+      </div>
       <div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
         <aside className="glass-card h-fit rounded-3xl p-6 sm:p-8">
           <ProfilePhoto

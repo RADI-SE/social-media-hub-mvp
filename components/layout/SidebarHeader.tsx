@@ -23,6 +23,8 @@ import {
   Lightbulb,
   Contact,
   Flag,
+  ListChecks,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -47,9 +49,11 @@ const growthIcons: Record<string, LucideIcon> = {
   growthScoreBreakdown: PieChart,
   growthContacts: Contact,
   growthFlagged: Flag,
+  growthTasks: ClipboardList,
   posts: FileText,
   calendar: CalendarDays,
   comments: MessageSquareText,
+  tasks: ListChecks,
 };
 
 export default function SidebarHeader() {

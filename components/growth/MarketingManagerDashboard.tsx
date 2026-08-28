@@ -31,8 +31,8 @@ type Contact = {
 
 export default function MarketingManagerDashboard() {
   const t = useTranslations("growth.roleDashboards.marketing_manager");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
-  const contacts = useQuery(api.contacts.listMyContacts);
+  const accounts = useQuery(api.growth.listAccounts);
+  const contacts = useQuery(api.contacts.listContacts);
   const updateStage = useMutation(api.journey.manualSetStage);
 
   const highIntentAccounts = accounts?.filter((a) => (a.intentScore ?? 0) > 70) ?? [];
