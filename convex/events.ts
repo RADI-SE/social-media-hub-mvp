@@ -1,6 +1,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAuth, requireRole } from "./auth";
+import { requireAuth } from "./auth";
 
 // Internal mutation to capture an event (called by Playwright workers or API)
 // This function is trusted and does not require user auth; it's called from server-side code.
@@ -32,48 +32,36 @@ export const captureEvent = internalMutation({
   },
 });
 
-// List events for a specific account (owner check)
+// List events for a specific account (shared read)
 export const listEventsByAccount = query({
   args: { accountId: v.id("accounts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
-    const account = await ctx.db.get(args.accountId);
-    if (!account || account.ownerUserId !== clerkUserId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAuth(ctx);
     return await ctx.db
       .query("events")
       .withIndex("by_account", (q) => q.eq("accountId", args.accountId))
-      .collect();
+      .take(500);
   },
 });
 
-// List events for a specific contact (owner check)
+// List events for a specific contact (shared read)
 export const listEventsByContact = query({
   args: { contactId: v.id("contacts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
-    const contact = await ctx.db.get(args.contactId);
-    if (!contact || contact.ownerUserId !== clerkUserId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAuth(ctx);
     return await ctx.db
       .query("events")
       .withIndex("by_contact", (q) => q.eq("contactId", args.contactId))
-      .collect();
+      .take(500);
   },
 });
 
-// List recent events for the current owner (activity feed)
-export const listEventsForOwner = query({
+// Recent activity feed across the whole workspace.
+export const listEvents = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    await requireAuth(ctx);
     const limit = args.limit ?? 50;
-    return await ctx.db
-      .query("events")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", clerkUserId))
-      .order("desc")
-      .take(limit);
+    return await ctx.db.query("events").order("desc").take(limit);
   },
 });

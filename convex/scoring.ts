@@ -1,6 +1,6 @@
 import { internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAuth, requireRole } from "./auth";
+import { requireAuth } from "./auth";
 
 // Internal mutation to recalculate scores for a single account based on its events
 export const calculateAccountScores = internalMutation({
@@ -79,16 +79,11 @@ export const calculateAccountScores = internalMutation({
   },
 });
 
-// Query to get detailed score breakdown for an account (owner or admin)
+// Query to get detailed score breakdown for an account (shared read)
 export const getAccountScoreBreakdown = query({
   args: { accountId: v.id("accounts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
-    const account = await ctx.db.get(args.accountId);
-    if (!account || account.ownerUserId !== clerkUserId) {
-      // Check if admin
-      await requireRole(ctx, ["admin"]);
-    }
-    return account;
+    await requireAuth(ctx);
+    return await ctx.db.get(args.accountId);
   },
 });

@@ -102,8 +102,9 @@ export default defineSchema({
     .index("by_postId", ["postId"]),
 
   followUpTasks: defineTable({
-    commentId: v.id("comments"),
+    commentId: v.optional(v.id("comments")),
     userId: v.id("users"),
+    assignedByUserId: v.optional(v.id("users")),
     title: v.string(),
     status: v.union(
       v.literal("Todo"),
@@ -115,7 +116,8 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_commentId", ["commentId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_assignedBy", ["assignedByUserId"]),
 
 accounts: defineTable({
   ownerUserId: v.string(),

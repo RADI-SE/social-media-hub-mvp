@@ -1,24 +1,24 @@
-import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAuth, requireRole } from "./auth";
- 
-export const listMyContacts = query({
+
+// Shared across the whole team - a contact created by one marketing manager
+// still needs to show up for the CMO and social media users working the
+// same account.
+export const listContacts = query({
   handler: async (ctx) => {
-    const clerkUserId = await requireAuth(ctx);
-    return await ctx.db
-      .query("contacts")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", clerkUserId))
-      .collect();
+    await requireAuth(ctx);
+    return await ctx.db.query("contacts").order("desc").take(500);
   },
 });
- 
+
 export const listContactsForOwnerInternal = internalQuery({
   args: { ownerUserId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("contacts")
       .withIndex("by_owner", (q) => q.eq("ownerUserId", args.ownerUserId))
-      .collect();
+      .take(500);
   },
 });
 
@@ -33,11 +33,9 @@ export const createContact = mutation({
   handler: async (ctx, args) => {
     const clerkUserId = await requireAuth(ctx);
 
-     if (args.accountId) {
+    if (args.accountId) {
       const account = await ctx.db.get(args.accountId);
-      if (!account || account.ownerUserId !== clerkUserId) {
-        throw new Error("Unauthorized");
-      }
+      if (!account) throw new Error("Account not found");
     }
 
     const contactId = await ctx.db.insert("contacts", {
@@ -54,7 +52,7 @@ export const createContact = mutation({
   },
 });
 
-// Update a contact (owner only)
+// Update a contact (any authenticated teammate - contacts are shared)
 export const updateContact = mutation({
   args: {
     contactId: v.id("contacts"),
@@ -65,11 +63,9 @@ export const updateContact = mutation({
     socialHandles: v.optional(v.record(v.string(), v.string())),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    await requireAuth(ctx);
     const contact = await ctx.db.get(args.contactId);
-    if (!contact || contact.ownerUserId !== clerkUserId) {
-      throw new Error("Unauthorized");
-    }
+    if (!contact) throw new Error("Contact not found");
 
     const updates: any = {};
     if (args.accountId !== undefined) updates.accountId = args.accountId;
@@ -85,58 +81,36 @@ export const updateContact = mutation({
   },
 });
 
-// Delete a contact (owner only)
+// Delete a contact (admin or marketing manager only - destructive)
 export const deleteContact = mutation({
   args: { contactId: v.id("contacts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    await requireRole(ctx, ["admin", "marketing_manager"]);
     const contact = await ctx.db.get(args.contactId);
-    if (!contact || contact.ownerUserId !== clerkUserId) {
-      throw new Error("Unauthorized");
-    }
+    if (!contact) throw new Error("Contact not found");
 
     await ctx.db.delete(args.contactId);
     return args.contactId;
   },
 });
 
-// List contacts by account (owner check)
+// List contacts by account (shared read)
 export const listContactsByAccount = query({
   args: { accountId: v.id("accounts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
-    const account = await ctx.db.get(args.accountId);
-    if (!account || account.ownerUserId !== clerkUserId) {
-      throw new Error("Unauthorized");
-    }
-
+    await requireAuth(ctx);
     return await ctx.db
       .query("contacts")
       .withIndex("by_account", (q) => q.eq("accountId", args.accountId))
-      .collect();
+      .take(500);
   },
 });
 
-// List all contacts for the current owner
-export const listContactsForOwner = query({
-  handler: async (ctx) => {
-    const clerkUserId = await requireAuth(ctx);
-    return await ctx.db
-      .query("contacts")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", clerkUserId))
-      .collect();
-  },
-});
-
-// Get single contact (owner check)
+// Get single contact (shared read)
 export const getContact = query({
   args: { contactId: v.id("contacts") },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
-    const contact = await ctx.db.get(args.contactId);
-    if (!contact || contact.ownerUserId !== clerkUserId) {
-      return null;
-    }
-    return contact;
+    await requireAuth(ctx);
+    return await ctx.db.get(args.contactId);
   },
 });

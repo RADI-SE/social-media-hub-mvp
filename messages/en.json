@@ -84,6 +84,7 @@
     "growthScoreBreakdown": "Score Breakdown",
     "growthContacts": "Contacts",
     "growthFlagged": "Flagged",
+    "growthTasks": "Team tasks",
     "footer": "Functional MVP · Connected workspace"
   },
   "auth": {
@@ -456,7 +457,14 @@
     "removePhoto": "Remove photo",
     "updatingPhoto": "Updating photo…",
     "securedBy": "Secured by Clerk",
-    "securityDescription": "Sensitive changes require your current password and are processed through protected API routes."
+    "securityDescription": "Sensitive changes require your current password and are processed through protected API routes.",
+    "workspaceRole": "Workspace role",
+    "loadingRole": "Loading…",
+    "noAdminTitle": "No admin assigned",
+    "noAdminDescription": "This workspace has no admin yet. Claim access to manage roles and tasks.",
+    "claimAdmin": "Claim admin access",
+    "adminClaimed": "You are now an admin",
+    "adminClaimFailed": "Could not claim admin access"
   },
  "growth": {
   "workspaceRoles": {
@@ -669,6 +677,30 @@
     "intent": "Intent score",
     "adoption": "Adoption score",
     "empty": "No accounts yet"
+  },
+  "tasks": {
+    "eyebrow": "Team coordination",
+    "title": "Team tasks",
+    "description": "Assign a follow-up to a teammate and track every delegated task in one place.",
+    "taskTitle": "Task",
+    "taskTitlePlaceholder": "e.g. Follow up with Northstar Retail",
+    "assignee": "Assignee",
+    "selectAssignee": "Select a teammate…",
+    "assignedBy": "Assigned by",
+    "assignAction": "Assign task",
+    "assignSuccess": "Task assigned",
+    "assignFailed": "Could not assign task",
+    "status": "Status",
+    "created": "Created",
+    "teamTasks": "All team tasks",
+    "empty": "No tasks assigned yet."
+  },
+  "flagged": {
+    "eyebrow": "Intent triage",
+    "title": "Flagged comments",
+    "description": "High-priority comments across every connected channel - leads and complaints that need a fast follow-up.",
+    "emptyTitle": "Nothing flagged right now",
+    "emptyDescription": "Comments classified as a lead or complaint will show up here for quick action."
   },
   "auditActions": {
     "roleChanged": "Changed a workspace role",

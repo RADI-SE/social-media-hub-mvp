@@ -1,6 +1,15 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAuth } from "./auth";
 
+// Shared view for oversight roles (CMO / marketing manager) and the flagged
+// comments queue - the whole team monitors the same brand channels.
+export const listAllComments = query({
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+    return await ctx.db.query("comments").order("desc").take(300);
+  },
+});
 
 export const storeComments = mutation({
   args: {

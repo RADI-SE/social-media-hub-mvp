@@ -17,7 +17,7 @@ type Account = {
 
 export default function ScoreBreakdownPage() {
   const t = useTranslations("growth.roleDashboards.marketing_manager");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const columns: ColumnDef<Account, any>[] = [
     { accessorKey: "name", header: "Account" },

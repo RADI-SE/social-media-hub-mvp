@@ -18,7 +18,7 @@ type Account = {
 
 export default function PipelinePage() {
   const t = useTranslations("growth.roleDashboards.cmo");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const totalPipeline = accounts?.reduce((sum, acc) => sum + (acc.pipeline ?? 0), 0) ?? 0;
   const stageCounts = accounts?.reduce<Record<string, number>>((counts, acc) => {

@@ -17,7 +17,7 @@ type Account = {
 
 export default function LTVPage() {
   const t = useTranslations("growth.roleDashboards.cmo");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const totalLtv = accounts?.reduce((sum, a) => sum + (a.ltv ?? 0), 0) ?? 0;
   const avgLtv = accounts?.length ? totalLtv / accounts.length : 0;

@@ -8,7 +8,7 @@ import { DashboardCard } from "@/components/growth/DashboardPrimitives";
 
 export default function AlertsPage() {
   const t = useTranslations("growth.roleDashboards.cmo");
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
 
   const highIntentAccounts = accounts?.filter((acc) => (acc.intentScore ?? 0) > 80) ?? [];
   const activeAccounts = accounts?.filter((acc) => acc.stage !== "Churned") ?? [];

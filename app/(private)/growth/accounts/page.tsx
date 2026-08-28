@@ -16,7 +16,7 @@ type Account = {
 };
 
 export default function AccountsPage() {
-  const accounts = useQuery(api.growth.listAccountsForOwner);
+  const accounts = useQuery(api.growth.listAccounts);
   const columns: ColumnDef<Account, any>[] = [
     { accessorKey: "name", header: "Account" },
     { accessorKey: "domain", header: "Domain" },
