@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "Spiders AI | Social Media Marketing Hub",
-    "description": "Plan, monitor, analyze, and follow up from one focused workspace."
+    "title": "Spiders AI | Customer Growth Marketing Hub",
+    "description": "Unify social, website, CRM, product, and support signals in one customer growth workspace."
   },
   "language": {
     "label": "Language",
@@ -59,11 +59,31 @@
     "addComment": "Add comment",
     "newSchedule": "New schedule",
     "accounts": "Accounts",
+    "connectedChannels": "Connected channels",
+    "growthWorkspace": "Customer growth",
+    "growthDashboard": "Role dashboard",
+    "growthMyWorkspace": "My workspace",
+    "growthOverview": "Growth overview",
+    "growthAccounts": "B2B accounts",
+    "growthLeads": "Leads & people",
+    "growthJourneys": "Journeys",
+    "growthTeam": "Team & access",
+    "growthApprovals": "Approval queue",
+    "growthActivity": "Activity & audit",
+    "growthRevenue": "Revenue impact",
     "loadingAccounts": "Loading accounts…",
     "noAccounts": "No accounts connected.",
     "settings": "Profile settings",
     "signOut": "Sign out",
     "profilePhoto": "{name} profile photo",
+    "growthPipeline": "Pipeline",
+    "growthROI": "ROI",
+    "growthLTV": "LTV",
+    "growthAlerts": "Alerts",
+    "growthRecommendations": "Recommendations",
+    "growthScoreBreakdown": "Score Breakdown",
+    "growthContacts": "Contacts",
+    "growthFlagged": "Flagged",
     "footer": "Functional MVP · Connected workspace"
   },
   "auth": {
@@ -437,5 +457,226 @@
     "updatingPhoto": "Updating photo…",
     "securedBy": "Secured by Clerk",
     "securityDescription": "Sensitive changes require your current password and are processed through protected API routes."
+  },
+ "growth": {
+  "workspaceRoles": {
+    "admin": "Admin",
+    "cmo": "CMO",
+    "marketing_manager": "Marketing manager",
+    "social_media_user": "Social media user"
+  },
+  "roleDashboards": {
+    "accessDenied": {
+      "title": "Access denied",
+      "description": "This dashboard is not available for the current workspace role."
+    },
+    "admin": {
+      "eyebrow": "Full control",
+      "title": "Admin dashboard",
+      "description": "Manage workspace users and roles, and review system activity.",
+      "accessLevel": "Administrator access",
+      "accessDescription": "Full control for user management, role assignment, system configuration, and audit logs.",
+      "manageUsers": "Manage users and roles",
+      "manageUsersDescription": "Invite members, assign one of the four dashboard roles, and review access.",
+      "systemLogs": "View system logs",
+      "systemLogsDescription": "Review important workspace, access, and configuration events.",
+      "usersAndRoles": "Users and assigned roles",
+      "recentLogs": "Recent system logs",
+      "noUsers": "No users found",
+      "noLogs": "No logs yet"
+    },
+    "cmo": {
+      "eyebrow": "Executive read-only view",
+      "title": "CMO dashboard",
+      "description": "Monitor account readiness, pipeline, conversion, campaign ROI, lifetime value, and executive alerts.",
+      "accessLevel": "Executive access",
+      "accessDescription": "Read-only analytics with no operational or publishing actions.",
+      "accountScores": "Overall account scores",
+      "accountScoresDescription": "Average intent across the active account portfolio.",
+      "pipeline": "Pipeline",
+      "pipelineDescription": "Total active account pipeline.",
+      "conversion": "Conversion",
+      "conversionDescription": "Tracked accounts converted to customers.",
+      "campaignRoi": "Campaign ROI",
+      "campaignRoiDescription": "Pipeline return compared with tracked campaign spend.",
+      "accountLtv": "Account LTV",
+      "accountLtvDescription": "Combined projected lifetime value.",
+      "accountPortfolio": "Account scores and lifetime value",
+      "executiveAlerts": "Executive alerts",
+      "ltv": "Projected LTV",
+      "noAccounts": "No accounts yet",
+      "noAlerts": "No alerts"
+    },
+    "marketing_manager": {
+      "eyebrow": "Operational growth view",
+      "title": "Marketing manager dashboard",
+      "description": "Prioritize scored accounts and leads, coordinate journeys, and manage nurture campaigns.",
+      "accessLevel": "Marketing manager access",
+      "accessDescription": "Can view accounts, filter journeys, review scores and recommendations, prioritize leads, and run campaigns.",
+      "totalLeads": "Total leads",
+      "activeAccounts": "Active accounts",
+      "intentScore": "Intent score",
+      "engagementScore": "Engagement score",
+      "adoptionScore": "Adoption score",
+      "moveStage": "Move stage",
+      "stageUpdated": "Stage updated",
+      "stageUpdateFailed": "Could not update stage",
+      "noLeads": "No leads yet",
+      "noRecommendations": "No recommendations yet",
+      "recommendationDemo": "Book a demo",
+      "recommendationDemoReason": "High intent detected. Schedule a sales conversation.",
+      "recommendationNurture": "Send nurture campaign",
+      "recommendationNurtureReason": "Adoption is strong but stage is still Lead.",
+      "prioritizeLeads": "Prioritize leads",
+      "prioritizeLeadsDescription": "Focus the team on the people with the strongest buying signals.",
+      "recommendedActions": "Recommended next actions",
+      "recommendedActionsDescription": "Use account context to choose the next coordinated step.",
+      "nurtureCampaigns": "Manage nurture campaigns",
+      "nurtureCampaignsDescription": "Coordinate campaign activity for accounts that are not ready to convert.",
+      "scoredAccounts": "Account list with scores",
+      "results": "Showing {count} of {total}",
+      "search": "Search account or industry…",
+      "clear": "Clear filters",
+      "account": "Account",
+      "accounts": "accounts",
+      "journeyStage": "Journey stage",
+      "allStages": "All stages",
+      "scoreBreakdown": "Score breakdown",
+      "nextAction": "Recommended next action",
+      "empty": "No accounts match these filters.",
+      "priorityLeadList": "Priority leads",
+      "activeNurtureCampaigns": "Nurture campaigns",
+      "campaignPipeline": "${value, number, ::currency/USD compact-short} influenced pipeline"
+    },
+    "social_media_user": {
+      "eyebrow": "Tactical social workspace",
+      "title": "Social media user dashboard",
+      "description": "Manage daily social content and interactions across connected channels.",
+      "accessLevel": "Social media user access",
+      "accessDescription": "Tactical access for social conversations, content creation, scheduling, tagging, and intent flags.",
+      "capabilities": {
+        "monitor": {
+          "title": "Monitor comments and DMs",
+          "description": "Review incoming conversations from connected social channels."
+        },
+        "createSchedule": {
+          "title": "Create and schedule posts",
+          "description": "Prepare content and select when it should publish."
+        },
+        "reply": {
+          "title": "Reply to comments and DMs",
+          "description": "Continue customer conversations from the social inbox."
+        },
+        "tag": {
+          "title": "Tag contacts and accounts",
+          "description": "Attach an interaction to the correct person or buying account."
+        },
+        "flagIntent": {
+          "title": "Flag high-intent interactions",
+          "description": "Escalate conversations that show meaningful buying intent."
+        }
+      }
+    }
+  },
+  "contacts": {
+    "title": "Contacts",
+    "description": "People who interacted with your social content.",
+    "empty": "No contacts yet. Comments will appear here.",
+    "noAccount": "No account",
+    "accountAssigned": "Account assigned",
+    "assignFailed": "Could not assign account"
+  },
+  "accounts": {
+    "eyebrow": "B2B growth",
+    "title": "Accounts",
+    "description": "Prioritize companies by buying-group readiness, intent, engagement, adoption, and revenue potential.",
+    "tableTitle": "Account portfolio",
+    "results": "Showing {count} of {total}",
+    "search": "Search company, domain, or industry…",
+    "clear": "Clear filters",
+    "allStages": "All stages",
+    "allTiers": "All tiers",
+    "account": "Buying account",
+    "stage": "Journey stage",
+    "coverage": "Group coverage",
+    "pipeline": "Pipeline",
+    "tier": "Account tier",
+    "empty": "No accounts match these filters.",
+    "open": "Open {name} account"
+  },
+  "leads": {
+    "eyebrow": "People intelligence",
+    "title": "Leads and decision-makers",
+    "description": "Score individuals without losing the account, role, and buying-group context around them.",
+    "tableTitle": "Known people",
+    "results": "Showing {count} of {total}",
+    "search": "Search person, title, or account…",
+    "clear": "Clear filters",
+    "person": "Person",
+    "account": "Account",
+    "role": "Buying role",
+    "leadScore": "Lead score",
+    "buyLikelihood": "Buy likelihood",
+    "latestSource": "Latest source",
+    "nextAction": "Recommended action",
+    "allIntent": "All intent levels",
+    "allSources": "All sources",
+    "empty": "No people match these filters.",
+    "open": "Open {name} account context"
+  },
+  "journeys": {
+    "eyebrow": "Lifecycle orchestration",
+    "title": "Customer journeys",
+    "description": "Compare person-led consumer journeys with account-led B2B journeys and coordinate the next action across teams.",
+    "b2b": "B2B account journey",
+    "consumer": "Consumer journey",
+    "adminView": "Admin journey view",
+    "b2bTitle": "The account advances when the buying group is ready",
+    "b2bExplanation": "The CMO, champion, daily user, and technical evaluator can move non-linearly. Their signals combine into account readiness.",
+    "consumerTitle": "One person moves through a direct lifecycle",
+    "consumerExplanation": "A consumer journey follows one identity from the first website visit through conversion, activation, and retention.",
+    "recommendedAction": "Sales action",
+    "recommendedReason": "Northstar Retail has high intent, three engaged buying roles, and a recent demo request.",
+    "reviewAccount": "Review Northstar",
+    "supportAction": "Support action",
+    "supportReason": "Namaa Health is highly adopted, but an active connection issue could delay full activation.",
+    "openSupportContext": "Open support context",
+    "stageHints": {
+      "discover": "Anonymous account activity",
+      "engaged": "Known people and intent",
+      "demo": "Buying group qualification",
+      "trial": "Product evaluation",
+      "activated": "Value moment reached",
+      "customer": "Revenue and expansion",
+      "renewal": "Health and retention"
+    },
+    "consumerStages": {
+      "firstVisit": "First visit",
+      "contentEngaged": "Content engaged",
+      "signedUp": "Signed up",
+      "activated": "Activated",
+      "retained": "Retained"
+    },
+    "consumerHints": {
+      "firstVisit": "Capture source, campaign, and high-intent pages.",
+      "contentEngaged": "Use social, email, and website behavior to personalize the next message.",
+      "signedUp": "Connect the anonymous journey to the known user profile.",
+      "activated": "Guide the user to the first meaningful product outcome.",
+      "retained": "Monitor repeated value, support needs, and churn signals."
+    },
+    "account": "Account",
+    "stage": "Stage",
+    "intent": "Intent score",
+    "adoption": "Adoption score",
+    "empty": "No accounts yet"
+  },
+  "auditActions": {
+    "roleChanged": "Changed a workspace role",
+    "integrationConnected": "Connected an integration",
+    "approvalRuleChanged": "Updated an approval rule",
+    "postApproved": "Approved a post",
+    "user_role_updated": "User role updated",
+    "memberInvited": "Invited a teammate"
   }
+}
 }

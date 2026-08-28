@@ -2,11 +2,12 @@
 
 import { Check } from "lucide-react";
 import { Channel } from "./types";
+import { useDashboardRole } from "@/lib/dashboard-access";  
 
 interface ChannelCardProps {
   channel: Channel;
   onClick: (id: string) => void;
-  disabled?: boolean; // ✅ new prop
+  disabled?: boolean;
 }
 
 export function ChannelCard({
@@ -14,6 +15,21 @@ export function ChannelCard({
   onClick,
   disabled = false,
 }: ChannelCardProps) {
+  const role = useDashboardRole();  
+
+   if (role === null) {
+     return (
+      <div className="flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-gray-50 animate-pulse">
+        <div className="w-10 h-10 rounded-full bg-gray-200" />
+        <div className="h-4 w-20 mt-1 bg-gray-200 rounded" />
+      </div>
+    );
+  }
+
+  if (role !== "social_media_user") {
+    return null; // ✅ invisible for non‑social users
+  }
+ 
   const Icon = channel.icon;
 
   const handleClick = () => {

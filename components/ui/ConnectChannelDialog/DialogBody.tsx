@@ -22,7 +22,7 @@ export function DialogBody({
             key={channel.id}
             channel={channel}
             onClick={onChannelClick}
-            disabled={connectedChannels.includes(channel.id)} // ✅ pass disabled
+            disabled={connectedChannels.includes(channel.id)}
           />
         ))}
       </div>

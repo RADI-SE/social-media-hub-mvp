@@ -6,9 +6,16 @@ import { ChannelCard } from "@/components/social/ChannelCard";
 import { useSocialAccounts } from "@/hooks/useSocialAccounts";
 import { channelList } from "@/config/channels";
 import { useTranslations } from "next-intl";
+import { useDashboardRole } from "@/lib/dashboard-access";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function SocialAccountsPage() {
   const t = useTranslations("social");
+  const role = useDashboardRole();
+  const router = useRouter();
+
+  // ✅ All Hooks called unconditionally at the top level
   const {
     statuses,
     connectedChannels,
@@ -18,6 +25,32 @@ export default function SocialAccountsPage() {
     handleDisconnect,
   } = useSocialAccounts();
 
+  // ✅ Redirect non‑social users (hook is now unconditional)
+  useEffect(() => {
+    if (role !== null && role !== "social_media_user") {
+      router.push("/");
+    }
+  }, [role, router]);
+
+  // ⏳ Show loader while role is resolving
+  if (role === null) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  // 🚪 If not social_media_user, show "Access Denied" (or keep the redirect)
+  if (role !== "social_media_user") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-lg font-medium text-red-600">Access Denied</p>
+      </div>
+    );
+  }
+
+  // ✅ Only social_media_user reaches this point
   const connectedConfigs = channelList.filter(
     (channel) => statuses[channel.id].connected,
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
@@ -16,6 +16,7 @@ import {
 import { fileToBase64 } from "@/lib/image";
 import { type Platform } from "@/types/social-account";
 import { useTranslations } from "next-intl";
+import { useDashboardRole } from "@/lib/dashboard-access"; // ✅ import role hook
 
 const formatPlatforms = (platforms: Platform[]) => platforms.join(" & ");
 
@@ -24,13 +25,38 @@ export default function CreatePage() {
   const router = useRouter();
   const { user } = useUser();
   const { getToken } = useAuth();
+  const role = useDashboardRole(); // 🧠 get current role
   const userId = user?.id;
 
+  // ✅ All hooks at the top (unconditional)
   const [isPosting, setIsPosting] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
-
   const recordPublishedPost = useMutation(api.posts.recordPublishedPost);
 
+  // ✅ Redirect non‑social users (unconditional useEffect)
+  useEffect(() => {
+    if (role !== null && role !== "social_media_user") {
+      router.push("/home");
+    }
+  }, [role, router]);
+
+  // ⏳ Loading state while role is resolving
+  if (role === null) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+ 
+  if (role !== "social_media_user") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-lg font-medium text-red-600">Access Denied</p>
+      </div>
+    );
+  }
+ 
   const handlePost = async (
     content: string,
     platforms: Platform[],

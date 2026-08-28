@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useMemo, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
@@ -9,17 +9,44 @@ import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import PostDetail from "@/components/posts/PostDetail";
+import { useDashboardRole } from "@/lib/dashboard-access";
 
 export default function PostDetailPage() {
   const t = useTranslations("posts");
   const { postId } = useParams<{ postId: string }>();
   const { user, isLoaded } = useUser();
+  const role = useDashboardRole();
+  const router = useRouter();
+ 
   const id = postId as Id<"posts">;
   const post = useQuery(api.posts.getPost, { postId: id });
   const comments = useQuery(
     api.comments.getCommentsForUser,
     user ? { userId: user.id } : "skip",
   );
+ 
+  useEffect(() => {
+    if (role !== null && role !== "social_media_user") {
+      router.push("/home");
+    }
+  }, [role, router]);
+ 
+  if (role === null) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+ 
+  if (role !== "social_media_user") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-lg font-medium text-red-600">Access Denied</p>
+      </div>
+    );
+  }
+ 
   const relatedComments = useMemo(() => {
     if (!post || !comments) return [];
     const postUrl = normalizeUrl(post.postUrl);
@@ -29,7 +56,7 @@ export default function PostDetailPage() {
         (Boolean(postUrl) && normalizeUrl(comment.targetUrl) === postUrl),
     );
   }, [comments, post]);
-
+ 
   if (!isLoaded || post === undefined || (user && comments === undefined)) {
     return (
       <div className="glass-card flex min-h-64 items-center justify-center rounded-3xl text-sm text-slate-500">
