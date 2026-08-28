@@ -41,9 +41,9 @@ export default function ROIPage() {
         <p className="text-sm text-slate-500">{t("campaignRoiDescription")}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <DashboardCard icon={BarChart3} title={t("pipeline")} description="" value={`$${totalPipeline.toLocaleString()}`} />
-        <DashboardCard icon={PieChart} title={t("accountLtv")} description="" value={`$${totalLtv.toLocaleString()}`} />
-        <DashboardCard icon={PieChart} title="ROI" description="" value={`${roi}%`} />
+        <DashboardCard icon={BarChart3} title={t("pipeline")} description="" value={`$${totalPipeline.toLocaleString()}`} isLoading={!accounts} />
+        <DashboardCard icon={PieChart} title={t("accountLtv")} description="" value={`$${totalLtv.toLocaleString()}`} isLoading={!accounts} />
+        <DashboardCard icon={PieChart} title="ROI" description="" value={`${roi}%`} isLoading={!accounts} />
       </div>
       <DataTable columns={columns} data={accounts ?? []} isLoading={!accounts} emptyMessage="No accounts" pageSize={8} />
     </div>

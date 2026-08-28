@@ -7,7 +7,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import DataTable from "@/components/ui/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import { RoleDashboardShell, DashboardCard } from "./DashboardPrimitives";
+import { RoleDashboardShell, DashboardCard, StageBadge, StageFunnel } from "./DashboardPrimitives";
 
 type AccountRow = {
   _id: string;
@@ -44,10 +44,18 @@ export default function CMODashboard() {
     };
   }, [accounts]);
 
+  const stageCounts = useMemo(() => {
+    if (!accounts) return {};
+    return accounts.reduce<Record<string, number>>((counts, acc) => {
+      counts[acc.stage] = (counts[acc.stage] ?? 0) + 1;
+      return counts;
+    }, {});
+  }, [accounts]);
+
   const accountColumns: ColumnDef<AccountRow, any>[] = [
     { accessorKey: "name", header: "Account", cell: ({ row }) => <span className="font-semibold text-slate-900">{row.original.name}</span> },
     { accessorKey: "intentScore", header: "Intent score", cell: ({ row }) => row.original.intentScore ?? "—" },
-    { accessorKey: "stage", header: "Stage", cell: ({ row }) => <span className="capitalize">{row.original.stage}</span> },
+    { accessorKey: "stage", header: "Stage", cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
     { accessorKey: "ltv", header: "Projected LTV", cell: ({ row }) => row.original.ltv ? `$${row.original.ltv.toLocaleString()}` : "—" },
   ];
 
@@ -55,11 +63,27 @@ export default function CMODashboard() {
     <RoleDashboardShell role="cmo">
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <DashboardCard icon={BarChart3} title={t("accountScores")} description={t("accountScoresDescription")} value={String(metrics.avgIntent)} />
-          <DashboardCard icon={DollarSign} title={t("pipeline")} description={t("pipelineDescription")} value={`$${metrics.totalPipeline.toLocaleString()}`} />
-          <DashboardCard icon={TrendingUp} title={t("conversion")} description={t("conversionDescription")} value={`${metrics.conversionRate}%`} />
-          <DashboardCard icon={BarChart3} title={t("campaignRoi")} description={t("campaignRoiDescription")} value={`${metrics.roi}%`} />
-          <DashboardCard icon={DollarSign} title={t("accountLtv")} description={t("accountLtvDescription")} value={`$${metrics.totalLtv.toLocaleString()}`} />
+          <DashboardCard icon={BarChart3} title={t("accountScores")} description={t("accountScoresDescription")} value={String(metrics.avgIntent)} isLoading={!accounts} />
+          <DashboardCard icon={DollarSign} title={t("pipeline")} description={t("pipelineDescription")} value={`$${metrics.totalPipeline.toLocaleString()}`} isLoading={!accounts} />
+          <DashboardCard icon={TrendingUp} title={t("conversion")} description={t("conversionDescription")} value={`${metrics.conversionRate}%`} isLoading={!accounts} />
+          <DashboardCard icon={BarChart3} title={t("campaignRoi")} description={t("campaignRoiDescription")} value={`${metrics.roi}%`} isLoading={!accounts} />
+          <DashboardCard icon={DollarSign} title={t("accountLtv")} description={t("accountLtvDescription")} value={`$${metrics.totalLtv.toLocaleString()}`} isLoading={!accounts} />
+        </div>
+
+        <div className="glass-card rounded-3xl p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <TrendingUp size={18} className="text-[#3156dc]" />
+            <h2 className="font-semibold text-[#071e55]">Pipeline by stage</h2>
+          </div>
+          {accounts ? (
+            <StageFunnel counts={stageCounts} />
+          ) : (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-2.5 w-full animate-pulse rounded-full bg-slate-100" />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="glass-card rounded-3xl p-6">
@@ -76,8 +100,14 @@ export default function CMODashboard() {
             <h2 className="font-semibold text-[#071e55]">{t("executiveAlerts")}</h2>
           </div>
           <ul className="space-y-3">
+            {!accounts && Array.from({ length: 2 }).map((_, i) => (
+              <li key={`skeleton-${i}`} className="h-16 animate-pulse rounded-2xl bg-slate-100" />
+            ))}
             {accounts?.filter((acc) => (acc.intentScore ?? 0) > 80).map((acc) => (
-              <li key={acc._id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white/70 p-4">
+              <li
+                key={acc._id}
+                className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white/70 p-4 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-white hover:shadow-md"
+              >
                 <div>
                   <p className="text-sm font-semibold text-[#071e55]">{acc.name} intent reached {acc.intentScore}</p>
                   <p className="mt-1 text-xs text-slate-500">A decision-maker requested a workflow demonstration.</p>

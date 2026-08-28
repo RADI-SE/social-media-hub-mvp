@@ -31,6 +31,7 @@ interface DataTableProps<TData extends RowData> {
   onRowClick?: (row: TData) => void;
   getRowLabel?: (row: TData) => string;
   pageSize?: number;
+  isLoading?: boolean;
 }
 
 export default function DataTable<TData extends RowData>({
@@ -42,6 +43,7 @@ export default function DataTable<TData extends RowData>({
   onRowClick,
   getRowLabel,
   pageSize = 8,
+  isLoading = false,
 }: DataTableProps<TData>) {
   const t = useTranslations("table");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize });
@@ -90,7 +92,20 @@ export default function DataTable<TData extends RowData>({
             ))}
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {table.getRowModel().rows.length ? (
+            {isLoading ? (
+              Array.from({ length: Math.min(pageSize, 5) }).map((_, i) => (
+                <tr key={`skeleton-${i}`}>
+                  {columns.map((_, colIndex) => (
+                    <td key={colIndex} className="px-6 py-4 align-middle">
+                      <div
+                        className="h-4 animate-pulse rounded-full bg-slate-100"
+                        style={{ width: colIndex === 0 ? "70%" : "45%" }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
@@ -106,7 +121,7 @@ export default function DataTable<TData extends RowData>({
                   className={
                     onRowClick
                       ? "cursor-pointer transition-colors hover:bg-blue-50/55 focus:bg-blue-50/55 focus:outline-none"
-                      : undefined
+                      : "transition-colors hover:bg-slate-50/70"
                   }
                 >
                   {row.getAllCells().map((cell) => (

@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import DataTable from "@/components/ui/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import { DashboardCard } from "@/components/growth/DashboardPrimitives";
+import { StageBadge, StageFunnel } from "@/components/growth/DashboardPrimitives";
 import { Route } from "lucide-react";
 
 type Account = {
@@ -27,7 +27,7 @@ export default function JourneysPage() {
 
   const columns: ColumnDef<Account, any>[] = [
     { accessorKey: "name", header: t("account") },
-    { accessorKey: "stage", header: t("stage"), cell: ({ row }) => <span className="capitalize">{row.original.stage}</span> },
+    { accessorKey: "stage", header: t("stage"), cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
     { accessorKey: "intentScore", header: t("intent") },
     { accessorKey: "adoptionScore", header: t("adoption") },
   ];
@@ -39,11 +39,24 @@ export default function JourneysPage() {
         <p className="text-sm text-slate-500">{t("description")}</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stageCounts &&
-          Object.entries(stageCounts).map(([stage, count]) => (
-            <DashboardCard key={stage} icon={Route} title={stage} description="" value={String(count)} />
-          ))}
+      <div className="glass-card rounded-3xl p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <Route size={18} className="text-[#3156dc]" />
+          <h2 className="font-semibold text-[#071e55]">{t("title")}</h2>
+        </div>
+        {accounts ? (
+          stageCounts && Object.keys(stageCounts).length > 0 ? (
+            <StageFunnel counts={stageCounts} />
+          ) : (
+            <p className="text-sm text-slate-500">{t("empty")}</p>
+          )
+        ) : (
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-2.5 w-full animate-pulse rounded-full bg-slate-100" />
+            ))}
+          </div>
+        )}
       </div>
 
       <DataTable columns={columns} data={accounts ?? []} isLoading={!accounts} emptyMessage={t("empty")} pageSize={8} />

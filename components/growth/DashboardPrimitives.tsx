@@ -41,23 +41,29 @@ export function DashboardCard({
   description,
   href,
   value,
+  isLoading,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   href?: string;
   value?: string;
+  isLoading?: boolean;
 }) {
   const content = (
     <>
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#3156dc]">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#3156dc] transition-transform group-hover:scale-105">
         <Icon size={20} />
       </span>
       <span className="min-w-0 flex-1">
-        {value && (
-          <span className="mb-2 block text-2xl font-semibold text-[#071e55]">
-            {value}
-          </span>
+        {isLoading ? (
+          <span className="mb-2 block h-7 w-20 animate-pulse rounded-full bg-slate-100" />
+        ) : (
+          value && (
+            <span className="mb-2 block text-2xl font-semibold text-[#071e55]">
+              {value}
+            </span>
+          )
         )}
         <span className="block text-sm font-semibold text-[#071e55]">
           {title}
@@ -66,17 +72,82 @@ export function DashboardCard({
           {description}
         </span>
       </span>
-      {href && <ArrowUpRight size={15} className="text-slate-300" />}
+      {href && (
+        <ArrowUpRight
+          size={15}
+          className="text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        />
+      )}
     </>
   );
   const className =
-    "glass-card flex items-start gap-4 rounded-2xl p-5 transition hover:border-blue-200";
+    "glass-card group flex items-start gap-4 rounded-2xl p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg";
   return href ? (
     <Link href={href} className={className}>
       {content}
     </Link>
   ) : (
     <article className={className}>{content}</article>
+  );
+}
+
+// Ordinal progression (Visitor -> Customer) drawn from a single blue ramp so the
+// stage order reads as magnitude, not an arbitrary category; Churned breaks out
+// of the ramp entirely since it's an exit state, not a step further along it.
+export const STAGE_ORDER = ["Visitor", "Lead", "MQL", "Customer", "Churned"] as const;
+
+export const STAGE_COLORS: Record<string, string> = {
+  Visitor: "#86b6ef",
+  Lead: "#3987e5",
+  MQL: "#1c5cab",
+  Customer: "#0d366b",
+  Churned: "#d03b3b",
+};
+
+export function StageBadge({ stage }: { stage: string }) {
+  const color = STAGE_COLORS[stage] ?? "#898781";
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+      style={{ backgroundColor: `${color}1f`, color }}
+    >
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      {stage}
+    </span>
+  );
+}
+
+export function StageFunnel({ counts }: { counts: Record<string, number> }) {
+  const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+  const max = Math.max(1, ...Object.values(counts));
+  const stages = STAGE_ORDER.filter((stage) => counts[stage] !== undefined);
+
+  if (total === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      {stages.map((stage) => {
+        const count = counts[stage] ?? 0;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        return (
+          <div key={stage} className="flex items-center gap-3" title={`${stage}: ${count} (${pct}%)`}>
+            <span className="w-20 shrink-0 text-xs font-semibold text-slate-500">{stage}</span>
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full transition-[width] duration-500 ease-out"
+                style={{
+                  width: `${Math.max(4, (count / max) * 100)}%`,
+                  backgroundColor: STAGE_COLORS[stage] ?? "#898781",
+                }}
+              />
+            </div>
+            <span className="w-10 shrink-0 text-right text-xs font-semibold text-[#071e55]">
+              {count}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import DataTable from "@/components/ui/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import { RoleDashboardShell, DashboardCard } from "./DashboardPrimitives";
+import { RoleDashboardShell, DashboardCard, StageBadge } from "./DashboardPrimitives";
 import { UsersRound, Target, Lightbulb, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,7 +64,7 @@ export default function MarketingManagerDashboard() {
     { accessorKey: "intentScore", header: t("intentScore"), cell: ({ row }) => row.original.intentScore ?? "—" },
     { accessorKey: "engagementScore", header: t("engagementScore"), cell: ({ row }) => row.original.engagementScore ?? "—" },
     { accessorKey: "adoptionScore", header: t("adoptionScore"), cell: ({ row }) => row.original.adoptionScore ?? "—" },
-    { accessorKey: "stage", header: t("journeyStage"), cell: ({ row }) => <span className="capitalize">{row.original.stage}</span> },
+    { accessorKey: "stage", header: t("journeyStage"), cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
     {
       id: "actions",
       header: t("moveStage"),
@@ -81,7 +81,7 @@ export default function MarketingManagerDashboard() {
                 toast.error(t("stageUpdateFailed"));
               }
             }}
-            className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-blue-200 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
             <option value="Visitor">Visitor</option>
             <option value="Lead">Lead</option>
@@ -113,10 +113,10 @@ export default function MarketingManagerDashboard() {
       <div className="space-y-6">
         {/* Top metrics */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <DashboardCard icon={Target} title={t("prioritizeLeads")} description={t("prioritizeLeadsDescription")} value={String(highIntentAccounts.length)} />
-          <DashboardCard icon={UsersRound} title={t("totalLeads")} description="" value={String(leads.length)} />
-          <DashboardCard icon={Lightbulb} title={t("recommendedActions")} description={t("recommendedActionsDescription")} value={String(recommendations.length)} />
-          <DashboardCard icon={CalendarDays} title={t("activeAccounts")} description="" value={String(accounts?.length ?? 0)} />
+          <DashboardCard icon={Target} title={t("prioritizeLeads")} description={t("prioritizeLeadsDescription")} value={String(highIntentAccounts.length)} isLoading={!accounts} />
+          <DashboardCard icon={UsersRound} title={t("totalLeads")} description="" value={String(leads.length)} isLoading={!contacts} />
+          <DashboardCard icon={Lightbulb} title={t("recommendedActions")} description={t("recommendedActionsDescription")} value={String(recommendations.length)} isLoading={!accounts} />
+          <DashboardCard icon={CalendarDays} title={t("activeAccounts")} description="" value={String(accounts?.length ?? 0)} isLoading={!accounts} />
         </div>
 
         {/* Account table */}
@@ -148,7 +148,7 @@ export default function MarketingManagerDashboard() {
           ) : (
             <ul className="space-y-3">
               {recommendations.map((rec, idx) => (
-                <li key={idx} className="rounded-2xl border border-slate-100 bg-white/70 p-4">
+                <li key={idx} className="rounded-2xl border border-slate-100 bg-white/70 p-4 transition hover:border-blue-100 hover:bg-white">
                   <p className="text-sm font-semibold">{rec.accountName}: {rec.action}</p>
                   <p className="mt-1 text-xs text-slate-500">{rec.reason}</p>
                 </li>

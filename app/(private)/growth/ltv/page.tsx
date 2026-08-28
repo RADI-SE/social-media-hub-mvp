@@ -6,7 +6,7 @@ import DataTable from "@/components/ui/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DollarSign } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DashboardCard } from "@/components/growth/DashboardPrimitives";
+import { DashboardCard, StageBadge } from "@/components/growth/DashboardPrimitives";
 
 type Account = {
   _id: string;
@@ -24,7 +24,7 @@ export default function LTVPage() {
 
   const columns: ColumnDef<Account, any>[] = [
     { accessorKey: "name", header: "Account" },
-    { accessorKey: "stage", header: "Stage" },
+    { accessorKey: "stage", header: "Stage", cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
     { accessorKey: "ltv", header: "LTV", cell: ({ row }) => `$${(row.original.ltv ?? 0).toLocaleString()}` },
   ];
 
@@ -35,8 +35,8 @@ export default function LTVPage() {
         <p className="text-sm text-slate-500">{t("accountLtvDescription")}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <DashboardCard icon={DollarSign} title={t("accountLtv")} description="" value={`$${totalLtv.toLocaleString()}`} />
-        <DashboardCard icon={DollarSign} title="Average LTV" description="" value={`$${Math.round(avgLtv).toLocaleString()}`} />
+        <DashboardCard icon={DollarSign} title={t("accountLtv")} description="" value={`$${totalLtv.toLocaleString()}`} isLoading={!accounts} />
+        <DashboardCard icon={DollarSign} title="Average LTV" description="" value={`$${Math.round(avgLtv).toLocaleString()}`} isLoading={!accounts} />
       </div>
       <DataTable columns={columns} data={accounts ?? []} isLoading={!accounts} emptyMessage="No accounts" pageSize={8} />
     </div>
