@@ -1,6 +1,7 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAuth } from "./auth";
+import { internal } from "./_generated/api";
 
 // Internal mutation to capture an event (called by Playwright workers or API)
 // This function is trusted and does not require user auth; it's called from server-side code.
@@ -25,9 +26,18 @@ export const captureEvent = internalMutation({
       createdAt: Date.now(),
     });
 
-    // After capturing event, trigger scoring and journey stage update
-    // We'll call internal mutations for scoring and stage update.
-    // For now, just return the eventId.
+    // Recompute the account's score from its full event history, then let the
+    // journey stage react to the fresh intent/adoption numbers - in that order,
+    // since the stage transition reads the scores scoring just wrote.
+    if (args.accountId) {
+      await ctx.runMutation(internal.scoring.calculateAccountScores, {
+        accountId: args.accountId,
+      });
+      await ctx.runMutation(internal.journey.updateJourneyStage, {
+        accountId: args.accountId,
+      });
+    }
+
     return eventId;
   },
 });
